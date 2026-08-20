@@ -1,0 +1,21 @@
+{
+  "name": "simple-budget",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Simple Budget - controla tu presupuesto de forma simple y funcional",
+  "type": "module",
+  "workspaces": [
+    "server",
+    "web"
+  ],
+  "scripts": {
+    "dev": "bun run dev:server & bun run dev:web",
+    "dev:server": "bun run --cwd server dev",
+    "dev:web": "bun run --cwd web dev",
+    "build": "bun run --cwd web build",
+    "start": "bun run --cwd server start",
+    "test": "bun test --cwd server",
+    "check": "bun run --cwd web check",
+    "db:seed": "bun run --cwd server seed"
+  }
+}

@@ -1,0 +1,30 @@
+node_modules/
+dist/
+build/
+*.log
+.DS_Store
+
+# Database (persisted volume in Docker)
+data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Agent/editor tooling (local only)
+.agents/
+.cursor/
+.opencode/
+.impeccable/
+skills-lock.json
+DESIGN.md
+PRODUCT.md
+
+# Svelte / type checker
+.svelte-kit/
+*.tsbuildinfo

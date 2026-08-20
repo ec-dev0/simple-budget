@@ -1,0 +1,17 @@
+services:
+  simple-budget:
+    build: .
+    image: simple-budget:latest
+    container_name: simple-budget
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      - PORT=3000
+      - HOST=0.0.0.0
+      - DB_PATH=/app/data/budget.db
+    volumes:
+      - budget-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  budget-data:

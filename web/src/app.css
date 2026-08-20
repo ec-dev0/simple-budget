@@ -1,0 +1,169 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --paper: #f6f2ea;
+  --surface: #fcfaf5;
+  --surface-2: #eee8db;
+  --ink: #262016;
+  --ink-soft: #5c5444;
+  --muted: #8d8474;
+  --line: #e2dac8;
+  --line-strong: #cfc5ae;
+  --accent: #3c7a53;
+  --accent-soft: #e3eee6;
+  --accent-ink: #ffffff;
+  --success: #2f7d4f;
+  --success-soft: #e2efe6;
+  --warning: #a8751a;
+  --warning-soft: #f6ecd4;
+  --danger: #b23a2c;
+  --danger-soft: #f7e2de;
+  --shadow: 0 1px 2px rgb(38 32 22 / 0.06), 0 8px 24px -12px rgb(38 32 22 / 0.18);
+}
+
+.dark {
+  --paper: #171512;
+  --surface: #1f1c17;
+  --surface-2: #282420;
+  --ink: #ede6d9;
+  --ink-soft: #b8af9f;
+  --muted: #7d7466;
+  --line: #35312a;
+  --line-strong: #4a443a;
+  --accent: #84c29b;
+  --accent-soft: #22382a;
+  --accent-ink: #122019;
+  --success: #86c89c;
+  --success-soft: #1d3325;
+  --warning: #d8a53c;
+  --warning-soft: #372c14;
+  --danger: #e07063;
+  --danger-soft: #3b211c;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 12px 32px -16px rgb(0 0 0 / 0.6);
+}
+
+@theme inline {
+  --font-sans: "Instrument Sans Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-surface2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-ink: var(--accent-ink);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+
+  --shadow-paper: var(--shadow);
+
+  --radius-lil: 0.9rem;
+}
+
+html {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  background-color: var(--paper);
+  color: var(--ink);
+  min-height: 100dvh;
+}
+
+::selection {
+  background-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+/* Controles: foco visible accesible */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Números en cantidades: alineación tabular */
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* La pauta del cuaderno: divisor con una sola línea reglada */
+.rule {
+  border-bottom: 1px solid var(--line);
+}
+
+/* Desliz de página al cambiar de categoría */
+@keyframes sb-page-in {
+  from {
+    opacity: 0;
+    transform: translateX(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+.page-in {
+  animation: sb-page-in 220ms cubic-bezier(0.2, 0.6, 0.2, 1);
+}
+
+/* Tachado al comprar */
+@keyframes sb-strike {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+.strike-line {
+  animation: sb-strike 240ms ease-out forwards;
+}
+
+/* Aparece el sello */
+@keyframes sb-stamp {
+  0% {
+    opacity: 0;
+    transform: scale(1.6) rotate(-6deg);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(0.92) rotate(-6deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(-6deg);
+  }
+}
+.stamp-in {
+  animation: sb-stamp 260ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+/* Esqueleto de carga */
+.skel {
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--line) 25%, var(--surface-2) 50%, var(--line) 75%);
+  background-size: 200% 100%;
+  animation: sb-skel 1.4s ease-in-out infinite;
+}
+@keyframes sb-skel {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
