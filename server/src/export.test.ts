@@ -217,6 +217,18 @@ describe("export / import — validación", () => {
 });
 
 describe("API endpoints", () => {
+  test("GET / devuelve información de la API", async () => {
+    const res = await api.request("/");
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({
+      service: "simple-budget",
+      status: "ok",
+      health: "/api/health",
+      documentation: "/docs/API.md",
+    });
+  });
+
   test("GET /api/export devuelve JSON con content-disposition", async () => {
     wipe();
     seed();

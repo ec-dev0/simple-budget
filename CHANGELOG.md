@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- The `/api` link on the home page now opens a JSON API overview instead of
+  returning a 404 response.
 - Docker runtime now uses a lightweight standalone Bun binary instead of
   installing the full runtime dependencies in the final image.
 - Container startup prepares the SQLite data directory and then drops

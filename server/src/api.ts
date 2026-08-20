@@ -104,6 +104,15 @@ const validationHook: Hook<unknown, any, string, "json" | "param"> = (result, _c
 
 export const api = new Hono();
 
+api.get("/", (c) =>
+  c.json({
+    service: "simple-budget",
+    status: "ok",
+    health: "/api/health",
+    documentation: "/docs/API.md",
+  })
+);
+
 api.get("/health", (c) => c.json({ status: "ok", service: "simple-budget" }));
 
 // ─── Settings ───────────────────────────────────────────────────────────────
