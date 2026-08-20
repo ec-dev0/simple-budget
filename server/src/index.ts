@@ -72,11 +72,12 @@ app.get("*", (c) => {
   );
 });
 
-console.log(`[simple-budget] API + web escuchando en http://${HOST}:${PORT}`);
 console.log(`[simple-budget] SQLite en ${process.env.DB_PATH ?? "./data/budget.db"}`);
 
-export default {
+const server = Bun.serve({
   port: PORT,
   hostname: HOST,
   fetch: app.fetch,
-};
+});
+
+console.log(`[simple-budget] API + web escuchando en ${server.url}`);

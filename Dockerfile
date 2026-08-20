@@ -35,8 +35,7 @@ ENV NODE_ENV=production \
     PORT=3000 \
     HOST=0.0.0.0 \
     DB_PATH=/app/data/budget.db \
-    WEB_DIST=/app/web/dist \
-    BUN_OPTIONS=--smol
+    WEB_DIST=/app/web/dist
 
 COPY --from=build --chown=app:app /out/simple-budget /app/simple-budget
 COPY --from=build --chown=app:app /app/web/dist /app/web/dist

@@ -10,6 +10,7 @@ export const dbPath =
     : DEFAULT_DB_PATH;
 
 try {
+  console.log(`[db] abriendo ${dbPath}`);
   mkdirSync(dirname(dbPath), { recursive: true });
 } catch (err) {
   console.error(`[db] FATAL: no se pudo crear la carpeta ${dirname(dbPath)}:`, err);
@@ -18,14 +19,17 @@ try {
 
 export const db = (() => {
   try {
-    return new Database(dbPath, { create: true });
+    const database = new Database(dbPath, { create: true });
+    console.log("[db] conexión abierta");
+    return database;
   } catch (err) {
     console.error(`[db] FATAL: no se pudo abrir/crear ${dbPath}:`, err);
     process.exit(1);
   }
 })();
 
-db.exec("PRAGMA journal_mode = WAL;");
+console.log("[db] configurando SQLite");
+db.exec("PRAGMA journal_mode = DELETE;");
 db.exec("PRAGMA foreign_keys = ON;");
 db.exec("PRAGMA busy_timeout = 5000;");
 
@@ -117,9 +121,12 @@ const migrations: Migration[] = [
 ];
 
 function runMigrations() {
+  console.log("[db] comprobando migraciones");
   const current = db.query("PRAGMA user_version").get() as { user_version: number };
+  console.log(`[db] versión actual: ${current.user_version}`);
   for (const m of migrations) {
     if (current.user_version < m.version) {
+      console.log(`[db] aplicando v${m.version} (${m.name})`);
       db.transaction(() => {
         db.exec(m.sql);
         m.post?.();
@@ -132,6 +139,7 @@ function runMigrations() {
 
 try {
   runMigrations();
+  console.log("[db] inicialización completada");
 } catch (err) {
   console.error("[db] FATAL: error aplicando migraciones:", err);
   process.exit(1);

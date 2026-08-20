@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   build path.
 - GitHub Actions only publishes production images from `main` or semver tags;
   pull requests remain build-only validations.
+- Server startup now calls `Bun.serve` explicitly instead of relying on
+  implicit default-export startup in compiled binaries.
+- SQLite uses the single-process `DELETE` journal mode to avoid WAL lock files
+  and startup issues on virtualized or restricted filesystems.
+- Added startup diagnostics around SQLite initialization and migrations.
 
 ## [0.2.0] - 2026-08-20
 
