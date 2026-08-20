@@ -1,8 +1,11 @@
 services:
   simple-budget:
     build: .
-    image: simple-budget:latest
+    # Si defines GHCR_IMAGE en el entorno, también se etiqueta con ese tag
+    image: ${GHCR_IMAGE:-simple-budget:latest}
     container_name: simple-budget
+    mem_limit: 512m
+    cpus: "0.50"
     ports:
       - "${PORT:-3000}:3000"
     environment:

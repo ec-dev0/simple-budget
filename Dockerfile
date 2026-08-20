@@ -6,8 +6,7 @@ WORKDIR /app
 COPY package.json bun.lock ./
 COPY server/package.json server/
 COPY web/package.json web/
-RUN --mount=type=cache,target=/root/.bun/install/cache \
-    bun install --frozen-lockfile
+RUN bun install --frozen-lockfile
 
 COPY . .
 RUN bun run --cwd web build
@@ -25,14 +24,21 @@ ENV NODE_ENV=production \
 COPY package.json bun.lock ./
 COPY server/package.json server/
 COPY web/package.json web/
-RUN --mount=type=cache,target=/root/.bun/install/cache \
-    bun install --production --frozen-lockfile
+RUN bun install --production --frozen-lockfile
 
 COPY server/src server/src
 COPY --from=build /app/web/dist web/dist
 
-# Usuario no-root; la base de datos vive en /app/data (volumen)
-RUN mkdir -p /app/data && chown -R bun:bun /app/data
+# tini para reenviar señales y limpiar procesos zombi (Bun usa worker threads)
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends tini ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Script de entrada: garantiza permisos correctos del volumen antes de lanzar bun
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh \
+    && mkdir -p /app/data && chown -R bun:bun /app/data
+
 USER bun
 
 EXPOSE 3000
@@ -41,4 +47,5 @@ VOLUME ["/app/data"]
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD bun -e "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
+ENTRYPOINT ["tini", "--", "docker-entrypoint.sh"]
 CMD ["bun", "server/src/index.ts"]

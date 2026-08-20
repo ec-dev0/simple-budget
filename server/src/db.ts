@@ -9,9 +9,21 @@ export const dbPath =
     ? resolve(process.env.DB_PATH)
     : DEFAULT_DB_PATH;
 
-mkdirSync(dirname(dbPath), { recursive: true });
+try {
+  mkdirSync(dirname(dbPath), { recursive: true });
+} catch (err) {
+  console.error(`[db] FATAL: no se pudo crear la carpeta ${dirname(dbPath)}:`, err);
+  process.exit(1);
+}
 
-export const db = new Database(dbPath, { create: true });
+export const db = (() => {
+  try {
+    return new Database(dbPath, { create: true });
+  } catch (err) {
+    console.error(`[db] FATAL: no se pudo abrir/crear ${dbPath}:`, err);
+    process.exit(1);
+  }
+})();
 
 db.exec("PRAGMA journal_mode = WAL;");
 db.exec("PRAGMA foreign_keys = ON;");
@@ -118,7 +130,12 @@ function runMigrations() {
   }
 }
 
-runMigrations();
+try {
+  runMigrations();
+} catch (err) {
+  console.error("[db] FATAL: error aplicando migraciones:", err);
+  process.exit(1);
+}
 
 export function nowIso(): string {
   return new Date().toISOString();
