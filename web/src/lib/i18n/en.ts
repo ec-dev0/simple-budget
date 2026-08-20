@@ -151,7 +151,7 @@ const en: Dict = {
     priorityMediumAria: "Medium priority",
     dueDateTitle: (date: string) => `Due date: ${date}`,
     notesLabel: "Notes",
-    missingActualCostHint: "Marked as bought. The actual cost is missing — tap the pencil icon to add it.",
+    missingActualCostHint: "An actual cost is required to mark it as bought — tap the pencil icon to add it.",
   },
 
   priority: {

@@ -5,18 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.2.0] - 2026-08-20
 
 ### Added
 - GHCR badge and `## Screenshots` placeholder (`docs/screenshots/preview1.png`)
   in `README.md` and `README.es.md`, plus `docker pull …:latest` quick-start in
   the Docker section of both READMEs.
-- Toast hint shown when an item is marked as bought without an actual cost,
-  suggesting to add it via the edit action (bilingual: `es`/`en`).
+- Toast hint shown when trying to mark an item as bought without an actual cost,
+  telling the user to add it via the edit action (bilingual: `es`/`en`,
+  auto-dismiss after 6 s, `role="status"`).
 
 ### Changed
-- Marking an item as bought no longer opens the "Mark as bought" form when the
-  actual cost is missing: the row toggles instantly (optimistic update) and the
+- Marking an item as bought without an actual cost no longer opens the
+  "Mark as bought" form nor toggles the checkbox: the check is rejected and the
   hint toast appears instead.
 - `CHANGELOG.md` moved from `docs/` to the repository root.
 
@@ -44,4 +45,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   now use `--mount=type=cache,target=/root/.bun/install/cache`, dramatically cutting
   CI build times on warm caches.
 
+[0.2.0]: https://github.com/ec-dev0/simple-budget/releases/tag/v0.2.0
 [0.1.0]: https://github.com/ec-dev0/simple-budget/releases/tag/v0.1.0

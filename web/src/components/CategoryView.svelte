@@ -48,10 +48,11 @@ const statusMeta = $derived.by<{ label: string; cls: string; tone: "success" | "
 });
 
 async function handleCheck(item: ItemRowType, purchased: boolean) {
-  await store.togglePurchased(item, purchased);
   if (purchased && item.actual_cost == null) {
     showHint(t("item.missingActualCostHint"));
+    return;
   }
+  await store.togglePurchased(item, purchased);
 }
 
 async function askDeleteCategory() {
