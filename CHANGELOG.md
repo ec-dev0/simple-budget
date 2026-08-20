@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-08-20
+
+### Changed
+- Docker runtime is a compiled Bun binary (`--smol`) on `debian:bookworm-slim` instead of interpreting TypeScript with `oven/bun`.
+- `docker-compose.yml` pulls `ghcr.io/ec-dev0/simple-budget:latest`; the image is built in GitHub Actions on push to `main` and on version tags.
+
+### Fixed
+- Host OOM on small VPS: Bun heap plus a healthcheck that spawned a second Bun process.
+
 ## [0.2.0] - 2026-08-20
 
 ### Added

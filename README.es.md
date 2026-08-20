@@ -143,11 +143,20 @@ docker run -d \
 # abrir http://localhost:3000
 ```
 
-¿Prefieres construir la imagen en local?
+Con Docker Compose:
 
-```bash
-docker compose up -d --build
-# abrir http://localhost:3000
+```yaml
+services:
+  simple-budget:
+    image: ghcr.io/ec-dev0/simple-budget:latest
+    pull_policy: always
+    ports:
+      - "3000:3000"
+    volumes:
+      - budget-data:/app/data
+    restart: unless-stopped
+volumes:
+  budget-data:
 ```
 
 La base vive en el volumen `budget-data` (`/app/data/budget.db`). Para hacer backup, basta con copiar ese archivo; para restaurar, sustituirlo y reiniciar el contenedor.

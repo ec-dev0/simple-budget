@@ -13,8 +13,10 @@ data/
 # VCS & env
 .git
 .gitignore
+.github
 .env
 .env.*
+docs/screenshots
 
 # Agent/editor tooling (local only)
 .agents/

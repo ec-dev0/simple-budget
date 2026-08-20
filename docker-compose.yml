@@ -1,20 +1,25 @@
 services:
   simple-budget:
-    build: .
-    # Si defines GHCR_IMAGE en el entorno, también se etiqueta con ese tag
-    image: ${GHCR_IMAGE:-simple-budget:latest}
-    container_name: simple-budget
-    mem_limit: 512m
-    cpus: "0.50"
+    image: ghcr.io/ec-dev0/simple-budget:latest
+    pull_policy: always
+    init: true
     ports:
       - "${PORT:-3000}:3000"
     environment:
-      - PORT=3000
-      - HOST=0.0.0.0
-      - DB_PATH=/app/data/budget.db
+      PORT: "3000"
+      HOST: "0.0.0.0"
+      DB_PATH: /app/data/budget.db
     volumes:
       - budget-data:/app/data
     restart: unless-stopped
+    mem_limit: 256m
+    cpus: "0.50"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 8s
 
 volumes:
   budget-data:

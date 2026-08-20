@@ -141,11 +141,20 @@ docker run -d \
 # open http://localhost:3000
 ```
 
-Want to build the image yourself?
+With Docker Compose:
 
-```bash
-docker compose up -d --build
-# open http://localhost:3000
+```yaml
+services:
+  simple-budget:
+    image: ghcr.io/ec-dev0/simple-budget:latest
+    pull_policy: always
+    ports:
+      - "3000:3000"
+    volumes:
+      - budget-data:/app/data
+    restart: unless-stopped
+volumes:
+  budget-data:
 ```
 
 The database lives in the `budget-data` volume (`/app/data/budget.db`). To back it up, just copy that file; to restore, replace it and restart the container.
