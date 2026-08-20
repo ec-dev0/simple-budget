@@ -8,6 +8,15 @@
 [![Database: SQLite](https://img.shields.io/badge/database-SQLite-0d9488?style=flat-square)](https://sqlite.org)
 [![Frontend: Svelte 5](https://img.shields.io/badge/frontend-Svelte%205-db2777?style=flat-square)](https://svelte.dev)
 [![Deploy: Docker](https://img.shields.io/badge/deploy-Docker-5b6ee1?style=flat-square)](Dockerfile)
+[![Image: ghcr.io](https://img.shields.io/badge/image-ghcr.io-5b6ee1?style=flat-square)](https://github.com/ec-dev0/simple-budget/pkgs/container/simple-budget)
+
+## Capturas
+
+<p align="center">
+  <img src="docs/screenshots/preview1.png" alt="Vista principal de Simple Budget" />
+</p>
+
+> Sustituye `docs/screenshots/preview1.png` por tu captura real cuando la tengas.
 
 ## ¿Qué es Simple Budget?
 
@@ -119,6 +128,22 @@ bun start          # Bun sirve API + web en :3000
 ```
 
 ### Docker
+
+Cada push a `main` publica automáticamente una imagen Docker en **GitHub Container Registry**. Puedes hacer pull y ejecutarla directamente, sin clonar el repositorio:
+
+```bash
+docker pull ghcr.io/ec-dev0/simple-budget:latest
+
+docker run -d \
+  --name simple-budget \
+  --restart unless-stopped \
+  -p 3000:3000 \
+  -v budget-data:/app/data \
+  ghcr.io/ec-dev0/simple-budget:latest
+# abrir http://localhost:3000
+```
+
+¿Prefieres construir la imagen en local?
 
 ```bash
 docker compose up -d --build

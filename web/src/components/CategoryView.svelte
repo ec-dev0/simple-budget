@@ -21,6 +21,20 @@ let form = $state<FormState>(null);
 let confirmingCategory = $state(false);
 let deleteTimer: ReturnType<typeof setTimeout> | null = null;
 
+let hint = $state<string | null>(null);
+let hintKey = $state(0);
+let hintTimer: ReturnType<typeof setTimeout> | null = null;
+
+function showHint(msg: string) {
+  hint = msg;
+  hintKey++;
+  if (hintTimer) clearTimeout(hintTimer);
+  hintTimer = setTimeout(() => {
+    hint = null;
+    hintTimer = null;
+  }, 6000);
+}
+
 const cat = $derived(store.activeCategory);
 const currency = $derived(store.current?.currency ?? "EUR");
 
@@ -34,10 +48,9 @@ const statusMeta = $derived.by<{ label: string; cls: string; tone: "success" | "
 });
 
 async function handleCheck(item: ItemRowType, purchased: boolean) {
+  await store.togglePurchased(item, purchased);
   if (purchased && item.actual_cost == null) {
-    form = { mode: "purchase", item };
-  } else {
-    await store.togglePurchased(item, purchased);
+    showHint(t("item.missingActualCostHint"));
   }
 }
 
@@ -71,6 +84,7 @@ $effect(() => {
 $effect(() => {
   return () => {
     if (deleteTimer) clearTimeout(deleteTimer);
+    if (hintTimer) clearTimeout(hintTimer);
   };
 });
 </script>
@@ -186,5 +200,27 @@ $effect(() => {
       </div>
     {/if}
   </section>
+  {/key}
+{/if}
+
+{#if hint}
+  {#key hintKey}
+    <div
+      role="status"
+      aria-live="polite"
+      class="fixed inset-x-0 bottom-6 z-50 mx-auto flex w-fit max-w-md items-center gap-3 rounded-full border border-warning/40 bg-warning-soft px-4 py-2.5 text-sm text-ink shadow-paper page-in"
+    >
+      <span>{hint}</span>
+      <button
+        type="button"
+        class="shrink-0 rounded-full p-1 text-muted transition hover:text-ink"
+        onclick={() => (hint = null)}
+        aria-label={t("form.cancel")}
+      >
+        <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M18 6L6 18M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
   {/key}
 {/if}

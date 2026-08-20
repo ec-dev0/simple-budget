@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- GHCR badge and `## Screenshots` placeholder (`docs/screenshots/preview1.png`)
+  in `README.md` and `README.es.md`, plus `docker pull …:latest` quick-start in
+  the Docker section of both READMEs.
+- Toast hint shown when an item is marked as bought without an actual cost,
+  suggesting to add it via the edit action (bilingual: `es`/`en`).
+
+### Changed
+- Marking an item as bought no longer opens the "Mark as bought" form when the
+  actual cost is missing: the row toggles instantly (optimistic update) and the
+  hint toast appears instead.
+- `CHANGELOG.md` moved from `docs/` to the repository root.
+
+### Fixed
+- Dark-mode contrast of the native currency `<select>` in the budget form: the
+  dropdown list now uses the theme tokens (`--surface`, `--ink`, `--accent-soft`)
+  and the control uses a custom chevron that matches the paper aesthetic
+  (light/dark variants), replacing the OS-native arrow.
+
 ## [0.1.0] - 2026-08-20
 
 ### Added

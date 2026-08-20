@@ -149,6 +149,7 @@ const es = {
     priorityMediumAria: "Prioridad media",
     dueDateTitle: (date: string) => `Fecha límite: ${date}`,
     notesLabel: "Notas",
+    missingActualCostHint: "Marcado como comprado. Falta el coste real — pulsa el icono del lápiz para añadirlo.",
   },
 
   priority: {

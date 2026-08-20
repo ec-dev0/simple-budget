@@ -87,6 +87,31 @@ body {
   color: var(--accent-ink);
 }
 
+/* Selects: desplegable temático y chevron coherente con el cuaderno */
+select {
+  color-scheme: light dark;
+  appearance: none;
+  -webkit-appearance: none;
+  background-repeat: no-repeat;
+  background-position: right 4px center;
+  background-size: 12px 12px;
+  padding-right: 1.75rem;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238d8474' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+}
+.dark select {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237d7466' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+}
+select option,
+select optgroup {
+  background-color: var(--surface);
+  color: var(--ink);
+  font-family: inherit;
+}
+select option:checked {
+  background-color: var(--accent-soft);
+  color: var(--ink);
+}
+
 /* Controles: foco visible accesible */
 :focus-visible {
   outline: 2px solid var(--accent);
