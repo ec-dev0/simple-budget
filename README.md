@@ -144,8 +144,17 @@ docker run -d \
 Want to build the image yourself?
 
 ```bash
-docker compose up -d --build
+docker build -t simple-budget:local .
+GHCR_IMAGE=simple-budget:local docker compose up -d
 # open http://localhost:3000
+```
+
+For a deployment using the published image, refresh it explicitly before
+starting the service:
+
+```bash
+docker compose pull
+docker compose up -d
 ```
 
 The database lives in the `budget-data` volume (`/app/data/budget.db`). To back it up, just copy that file; to restore, replace it and restart the container.

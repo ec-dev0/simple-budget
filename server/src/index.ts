@@ -5,7 +5,7 @@ import { api } from "./api.ts";
 
 const PORT = Number(process.env.PORT ?? 3000);
 const HOST = process.env.HOST ?? "0.0.0.0";
-const DIST = resolve(import.meta.dir, "..", "..", "web", "dist");
+const DIST = resolve(process.env.WEB_DIST ?? resolve(import.meta.dir, "..", "..", "web", "dist"));
 
 const MIME: Record<string, string> = {
   ".html": "text/html; charset=utf-8",

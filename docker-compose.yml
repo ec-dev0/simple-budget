@@ -1,8 +1,7 @@
 services:
   simple-budget:
-    build: .
-    # Si defines GHCR_IMAGE en el entorno, también se etiqueta con ese tag
-    image: ${GHCR_IMAGE:-simple-budget:latest}
+    image: ${GHCR_IMAGE:-ghcr.io/ec-dev0/simple-budget:latest}
+    pull_policy: ${PULL_POLICY:-missing}
     container_name: simple-budget
     mem_limit: 512m
     cpus: "0.50"

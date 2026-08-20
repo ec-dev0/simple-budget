@@ -23,8 +23,9 @@ data/
 .opencode/
 skills-lock.json
 
-# Docs & metadata (not needed in the image)
+# Docs & metadata (only the API reference is copied into the web build)
 **/*.md
+!docs/
 !docs/API.md
 LICENSE
 Dockerfile

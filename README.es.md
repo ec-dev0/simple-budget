@@ -146,8 +146,17 @@ docker run -d \
 ¿Prefieres construir la imagen en local?
 
 ```bash
-docker compose up -d --build
+docker build -t simple-budget:local .
+GHCR_IMAGE=simple-budget:local docker compose up -d
 # abrir http://localhost:3000
+```
+
+Para desplegar la imagen publicada, actualízala explícitamente antes de
+arrancar el servicio:
+
+```bash
+docker compose pull
+docker compose up -d
 ```
 
 La base vive en el volumen `budget-data` (`/app/data/budget.db`). Para hacer backup, basta con copiar ese archivo; para restaurar, sustituirlo y reiniciar el contenedor.

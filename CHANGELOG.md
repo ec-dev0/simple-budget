@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- Docker runtime now uses a lightweight standalone Bun binary instead of
+  installing the full runtime dependencies in the final image.
+- Container startup prepares the SQLite data directory and then drops
+  privileges to the non-root application user, including for mounted volumes.
+- Compose uses the GHCR image by default while retaining an explicit local
+  build path.
+- GitHub Actions only publishes production images from `main` or semver tags;
+  pull requests remain build-only validations.
+
 ## [0.2.0] - 2026-08-20
 
 ### Added
