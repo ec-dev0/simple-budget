@@ -85,6 +85,7 @@ const es = {
     limit: "Límite de gasto (opcional)",
     limitPlaceholder: "Sin límite",
     save: "Guardar",
+    updateAria: "Editar categoría",
     delete: "Eliminar categoría",
     deleteConfirmed: "Confirmar borrado",
     deleteInProgress: "¿Seguro?",

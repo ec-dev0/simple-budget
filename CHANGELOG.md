@@ -7,7 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-08-22
+
+### Added
+- Category editing from the category detail view, including name, description,
+  spending limit, color and icon.
+- Repository coverage for updating category data.
+
 ### Fixed
+- Category summaries now update immediately after changing the spending limit.
+- Category forms remain open when the save request fails instead of appearing
+  to save the changes.
+- Workspace package versions now match the `v0.2.3` release.
+
 - The `/api` link on the home page now opens a JSON API overview instead of
   returning a 404 response.
 - Docker runtime now uses a lightweight standalone Bun binary instead of
@@ -64,5 +76,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   now use `--mount=type=cache,target=/root/.bun/install/cache`, dramatically cutting
   CI build times on warm caches.
 
+[0.2.3]: https://github.com/ec-dev0/simple-budget/releases/tag/v0.2.3
 [0.2.0]: https://github.com/ec-dev0/simple-budget/releases/tag/v0.2.0
 [0.1.0]: https://github.com/ec-dev0/simple-budget/releases/tag/v0.1.0

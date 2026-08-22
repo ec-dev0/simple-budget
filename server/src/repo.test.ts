@@ -36,6 +36,22 @@ describe("budgets", () => {
 });
 
 describe("categories", () => {
+  test("crea y actualiza una categoría", () => {
+    const b = repo.createBudget({ name: "Category update" });
+    const c = repo.createCategory(b.id, { name: "Original", limitAmount: 1000 });
+
+    const updated = repo.updateCategory(c.id, {
+      name: "Renombrada",
+      description: "Nueva descripción",
+      limitAmount: 1250,
+    });
+
+    expect(updated.name).toBe("Renombrada");
+    expect(updated.description).toBe("Nueva descripción");
+    expect(updated.limit_amount).toBe(1250);
+    expect(repo.getCategory(c.id).name).toBe("Renombrada");
+  });
+
   test("límite: holgado / justo / desbordado", () => {
     const b = repo.createBudget({ name: "Cat test", initialAmount: 5000 });
     const c = repo.createCategory(b.id, { name: "Obra", limitAmount: 1000 });

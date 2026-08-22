@@ -1,13 +1,14 @@
 <script lang="ts">
-import { Plus, Trash2 } from "lucide-svelte";
+import { Pencil, Plus, Trash2 } from "lucide-svelte";
 import { store } from "../lib/store.svelte.ts";
 import { money } from "../lib/format.ts";
-import { btnDangerGhost, btnPrimary, chipCls } from "../lib/ui.ts";
+import { btnDangerGhost, btnGhost, btnPrimary, chipCls } from "../lib/ui.ts";
 import { t } from "../lib/i18n/index.svelte.ts";
 import type { ItemRow as ItemRowType } from "../lib/types.ts";
 import Icon from "./Icon.svelte";
 import ItemRow from "./ItemRow.svelte";
 import ItemForm from "./ItemForm.svelte";
+import CategoryForm from "./CategoryForm.svelte";
 import ProgressBar from "./ProgressBar.svelte";
 
 type FormState =
@@ -17,6 +18,7 @@ type FormState =
   | null;
 
 let form = $state<FormState>(null);
+let categoryFormOpen = $state(false);
 
 let confirmingCategory = $state(false);
 let deleteTimer: ReturnType<typeof setTimeout> | null = null;
@@ -80,6 +82,7 @@ $effect(() => {
     deleteTimer = null;
   }
   confirmingCategory = false;
+  categoryFormOpen = false;
 });
 
 $effect(() => {
@@ -114,6 +117,18 @@ $effect(() => {
           <span class={statusMeta.cls}>{statusMeta.label}</span>
         {/if}
         <button
+          class={btnGhost}
+          onclick={() => {
+            categoryFormOpen = !categoryFormOpen;
+            form = null;
+          }}
+          aria-label={t("category.updateAria")}
+          title={t("category.updateAria")}
+          aria-expanded={categoryFormOpen}
+        >
+          <Pencil size={15} aria-hidden="true" />
+        </button>
+        <button
           class={confirmingCategory
             ? "inline-flex items-center gap-1 rounded-full px-3 py-2 text-sm font-semibold text-danger bg-danger-soft transition"
             : btnDangerGhost}
@@ -126,6 +141,16 @@ $effect(() => {
         </button>
       </div>
     </div>
+
+    {#if categoryFormOpen}
+      <div class="mt-4">
+        <CategoryForm
+          category={cat}
+          onDone={() => (categoryFormOpen = false)}
+          onCancel={() => (categoryFormOpen = false)}
+        />
+      </div>
+    {/if}
 
     {#if cat.summary.limit !== null}
       <div class="mt-4">
@@ -182,7 +207,7 @@ $effect(() => {
 
     {#if cat.items.length > 0}
       <ul class="mt-3 divide-y divide-line">
-        {#each cat.items as item}
+        {#each cat.items as item (item.id)}
           <ItemRow
             {item}
             {currency}

@@ -87,6 +87,7 @@ const en: Dict = {
     limit: "Spending cap (optional)",
     limitPlaceholder: "No limit",
     save: "Save",
+    updateAria: "Edit category",
     delete: "Delete category",
     deleteConfirmed: "Confirm deletion",
     deleteInProgress: "Are you sure?",

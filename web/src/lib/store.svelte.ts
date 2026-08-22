@@ -167,27 +167,32 @@ class SimpleBudgetStore {
 
   // ─── Categorías ───────────────────────────────────────────────────────────
 
-  async createCategory(input: CategoryInput): Promise<void> {
-    if (!this.current) return;
+  async createCategory(input: CategoryInput): Promise<boolean> {
+    if (!this.current) return false;
     try {
       const cat = await api.createCategory(this.current.id, input);
       this.current.categories = [...this.current.categories, { ...cat, items: [], summary: emptySummary() }];
       this.activeCategoryId = cat.id;
+      return true;
     } catch (e) {
       this.error = errMessage(e);
+      return false;
     }
   }
 
-  async updateCategory(id: string, input: CategoryInput): Promise<void> {
+  async updateCategory(id: string, input: CategoryInput): Promise<boolean> {
     try {
       const updated = await api.updateCategory(id, input);
       const cat = this.current?.categories.find((c) => c.id === id);
       if (cat && this.current) {
         const idx = this.current.categories.indexOf(cat);
         this.current.categories[idx] = { ...cat, ...updated };
+        categoryStatusInner(this.current.categories[idx]!);
       }
+      return true;
     } catch (e) {
       this.error = errMessage(e);
+      return false;
     }
   }
 

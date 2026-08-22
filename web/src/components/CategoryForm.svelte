@@ -40,9 +40,17 @@ async function submit() {
     icon,
   };
   if (category) {
-    await store.updateCategory(category.id, input);
+    const updated = await store.updateCategory(category.id, input);
+    if (!updated) {
+      saving = false;
+      return;
+    }
   } else {
-    await store.createCategory(input);
+    const created = await store.createCategory(input);
+    if (!created) {
+      saving = false;
+      return;
+    }
   }
   saving = false;
   onDone?.();
@@ -92,7 +100,7 @@ async function submit() {
   <div>
     <span class={labelCls}>{t("form.color")}</span>
     <div class="flex flex-wrap gap-2">
-      {#each COLORS as c}
+      {#each COLORS as c (c)}
         <button
           type="button"
           class="h-7 w-7 rounded-full transition active:scale-90 {color === c ? 'ring-2 ring-offset-2 ring-accent ring-offset-surface' : ''}"
@@ -107,7 +115,7 @@ async function submit() {
   <div>
     <span class={labelCls}>{t("form.icon")}</span>
     <div class="grid grid-cols-8 gap-1.5">
-      {#each CATEGORY_ICON_KEYS as key}
+      {#each CATEGORY_ICON_KEYS as key (key)}
         <button
           type="button"
           class="flex h-9 items-center justify-center rounded-lg transition {icon === key ? 'bg-accent text-accent-ink' : 'text-ink-soft hover:bg-surface2'}"
