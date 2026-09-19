@@ -113,7 +113,8 @@ export const api = {
     request<{ payment: ItemPayment; item: ItemRow }>(`/items/${id}/payments`, { method: "POST", body: JSON.stringify(input) }),
   updateItemPayment: (id: string, input: Partial<PaymentInput>) =>
     request<{ payment: ItemPayment; item: ItemRow }>(`/payments/${id}`, { method: "PATCH", body: JSON.stringify(input) }),
-  deleteItemPayment: (id: string) => request<{ ok: boolean }>(`/payments/${id}`, { method: "DELETE" }),
+  deleteItemPayment: (id: string) =>
+    request<{ ok: boolean; item: ItemRow }>(`/payments/${id}`, { method: "DELETE" }),
   purchaseItem: (id: string, purchased: boolean, actualCost?: number | null) =>
     request<ItemRow>(`/items/${id}/purchase`, {
       method: "PATCH",

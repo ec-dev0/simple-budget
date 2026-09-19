@@ -15,7 +15,6 @@ type FormState =
   | { mode: "create" }
   | { mode: "edit"; item: ItemRowType }
   | { mode: "purchase"; item: ItemRowType }
-  | { mode: "payment"; item: ItemRowType }
   | null;
 
 let form = $state<FormState>(null);
@@ -191,13 +190,6 @@ $effect(() => {
               onDone={() => (form = null)}
               onCancel={() => (form = null)}
             />
-          {:else}
-            <ItemForm
-              item={form.item}
-              paymentMode={true}
-              onDone={() => (form = null)}
-              onCancel={() => (form = null)}
-            />
           {/if}
         </div>
       {/key}
@@ -222,7 +214,7 @@ $effect(() => {
             onCheck={(p) => handleCheck(item, p)}
             onEdit={() => (form = { mode: "edit", item })}
             onDelete={() => store.deleteItem(item.id)}
-            onAddPayment={() => (form = { mode: "payment", item })}
+            onDeletePayment={(paymentId) => store.deletePayment(paymentId)}
           />
         {/each}
       </ul>

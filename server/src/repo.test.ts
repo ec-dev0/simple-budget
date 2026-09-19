@@ -103,6 +103,22 @@ describe("items", () => {
     expect(() => repo.createItemPayment(i.id, { amount: 21 })).toThrow("ERR_PAYMENT_EXCEEDS_ACTUAL_COST");
   });
 
+  test("permite editar y eliminar pagos", () => {
+    const b = repo.createBudget({ name: "Editar cuotas" });
+    const c = repo.createCategory(b.id, { name: "C" });
+    const i = repo.createItem(c.id, { name: "Armario", actualCost: 300 });
+    const payment = repo.createItemPayment(i.id, { amount: 100, note: "Reserva" });
+
+    const updated = repo.updateItemPayment(payment.id, { amount: 120, note: "Primera cuota" });
+    expect(updated.amount).toBe(120);
+    expect(updated.note).toBe("Primera cuota");
+    expect(repo.getItemDetail(i.id).paymentSummary.paidAmount).toBe(120);
+
+    expect(repo.deleteItemPayment(payment.id)).toBe(i.id);
+    expect(repo.getItemDetail(i.id).payments).toHaveLength(0);
+    expect(repo.getItemDetail(i.id).paymentSummary.paidAmount).toBe(0);
+  });
+
   test("marcar comprado registra fecha y coste real", () => {
     const b = repo.createBudget({ name: "Items" });
     const c = repo.createCategory(b.id, { name: "C" });

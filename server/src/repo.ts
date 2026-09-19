@@ -379,9 +379,12 @@ export function updateItemPayment(
   return db.query("SELECT * FROM item_payments WHERE id = ?").get(id) as ItemPaymentRow;
 }
 
-export function deleteItemPayment(id: string): void {
+export function deleteItemPayment(id: string): string {
+  const payment = db.query("SELECT item_id FROM item_payments WHERE id = ?").get(id) as { item_id: string } | null;
+  if (!payment) throw new NotFoundError("Pago no encontrado");
   const result = db.query("DELETE FROM item_payments WHERE id = ?").run(id);
   if (result.changes === 0) throw new NotFoundError("Pago no encontrado");
+  return payment.item_id;
 }
 
 export function createItem(

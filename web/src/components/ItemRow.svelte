@@ -1,9 +1,10 @@
 <script lang="ts">
-import { CalendarClock, CreditCard, Pencil, Store, Trash2 } from "lucide-svelte";
+import { CalendarClock, ChevronDown, CreditCard, Pencil, Store, Trash2 } from "lucide-svelte";
 import { fmtDateStamp, money, relativeDate } from "../lib/format.ts";
 import { btnIcon, btnDangerGhost } from "../lib/ui.ts";
 import { t } from "../lib/i18n/index.svelte.ts";
-import type { ItemRow } from "../lib/types.ts";
+import type { ItemPayment, ItemRow } from "../lib/types.ts";
+import PaymentForm from "./PaymentForm.svelte";
 
 let {
   item,
@@ -11,14 +12,14 @@ let {
   onCheck,
   onEdit,
   onDelete,
-  onAddPayment,
+  onDeletePayment,
 }: {
   item: ItemRow;
   currency: string;
   onCheck: (purchased: boolean) => void;
   onEdit: () => void;
   onDelete: () => void;
-  onAddPayment: () => void;
+  onDeletePayment: (paymentId: string) => void;
 } = $props();
 
 const bought = $derived(item.purchased === 1);
@@ -30,6 +31,15 @@ const overEstimate = $derived(
 );
 
 const qty = $derived(item.quantity !== 1 || item.unit ? `${Number(item.quantity)}${item.unit ? " " + item.unit : ""}` : "");
+let paymentsOpen = $state(false);
+let addingPayment = $state(false);
+let editingPaymentId = $state<string | null>(null);
+let confirmingPaymentId = $state<string | null>(null);
+const payments = $derived(item.payments ?? []);
+
+function paymentDate(payment: ItemPayment): string {
+  return payment.paid_at.slice(0, 10);
+}
 </script>
 
 <li
@@ -95,6 +105,75 @@ const qty = $derived(item.quantity !== 1 || item.unit ? `${Number(item.quantity)
       {/if}
       {#if item.notes}<span class="truncate max-w-[28ch]">{item.notes}</span>{/if}
     </p>
+
+    {#if payments.length > 0 || item.paymentSummary?.paidAmount}
+      <div class="mt-2 rounded-lg border border-line bg-surface2/40 p-2.5">
+        <button
+          type="button"
+          class="flex w-full items-center justify-between gap-2 text-left text-xs font-medium text-ink-soft hover:text-ink"
+          onclick={() => (paymentsOpen = !paymentsOpen)}
+          aria-expanded={paymentsOpen}
+        >
+          <span>{t("item.paymentsTitle", payments.length)}</span>
+          <ChevronDown size={14} class={paymentsOpen ? "rotate-180 transition-transform" : "transition-transform"} aria-hidden="true" />
+        </button>
+
+        {#if paymentsOpen}
+          <div class="mt-2 space-y-2 border-t border-line pt-2">
+            {#each payments as payment (payment.id)}
+              <div class="flex items-start justify-between gap-2 text-xs">
+                {#if editingPaymentId === payment.id}
+                  <div class="min-w-0 flex-1">
+                    <PaymentForm
+                      itemId={item.id}
+                      {payment}
+                      onDone={() => (editingPaymentId = null)}
+                      onCancel={() => (editingPaymentId = null)}
+                    />
+                  </div>
+                {:else}
+                  <div class="min-w-0">
+                    <p class="tnum font-medium text-ink">{money(payment.amount, currency)} · {paymentDate(payment)}</p>
+                    {#if payment.note}<p class="truncate text-muted">{payment.note}</p>{/if}
+                  </div>
+                  <div class="flex shrink-0 items-center">
+                    <button
+                      type="button"
+                      class={btnIcon + " min-h-[36px] min-w-[36px]"}
+                      onclick={() => { editingPaymentId = payment.id; confirmingPaymentId = null; }}
+                      aria-label={t("item.editPaymentAria", payment.amount.toFixed(2))}
+                      title={t("item.editPayment")}
+                    >
+                      <Pencil size={13} aria-hidden="true" />
+                    </button>
+                    <button
+                      type="button"
+                      class={confirmingPaymentId === payment.id ? "rounded-full bg-danger-soft px-2 py-1 text-[11px] font-medium text-danger" : btnDangerGhost + " min-h-[36px] min-w-[36px]"}
+                      onclick={() => {
+                        if (confirmingPaymentId === payment.id) {
+                          onDeletePayment(payment.id);
+                          confirmingPaymentId = null;
+                        } else {
+                          confirmingPaymentId = payment.id;
+                        }
+                      }}
+                      aria-label={confirmingPaymentId === payment.id ? t("item.confirmDeletePayment") : t("item.deletePaymentAria", payment.amount.toFixed(2))}
+                      title={confirmingPaymentId === payment.id ? t("item.confirmDeletePayment") : t("item.deletePayment")}
+                    >
+                      {#if confirmingPaymentId === payment.id}{t("item.confirmDeletePayment")}{:else}<Trash2 size={13} aria-hidden="true" />{/if}
+                    </button>
+                  </div>
+                {/if}
+              </div>
+            {/each}
+          </div>
+        {/if}
+      </div>
+    {/if}
+
+    {#if addingPayment}
+      <PaymentForm itemId={item.id} onDone={() => (addingPayment = false)} onCancel={() => (addingPayment = false)} />
+    {/if}
   </div>
 
   <div class="flex shrink-0 items-center gap-3">
@@ -119,7 +198,7 @@ const qty = $derived(item.quantity !== 1 || item.unit ? `${Number(item.quantity)
     <div class="item-actions flex items-center transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
       <button
         class={btnIcon + " min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:p-2"}
-        onclick={onAddPayment}
+        onclick={() => { paymentsOpen = true; addingPayment = true; }}
         aria-label={t("item.addPaymentAria", item.name)}
         title={t("item.addPayment")}
       >

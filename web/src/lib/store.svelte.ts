@@ -253,6 +253,34 @@ class SimpleBudgetStore {
     }
   }
 
+  async updatePayment(paymentId: string, input: Partial<PaymentInput>): Promise<void> {
+    const cat = this.activeCategory;
+    if (!cat) return;
+    try {
+      const result = await api.updateItemPayment(paymentId, input);
+      const idx = cat.items.findIndex((item) => item.id === result.item.id);
+      if (idx !== -1) cat.items[idx] = result.item;
+      categoryStatusInner(cat);
+      this.recomputeBudgetSummary();
+    } catch (e) {
+      this.error = errMessage(e);
+    }
+  }
+
+  async deletePayment(paymentId: string): Promise<void> {
+    const cat = this.activeCategory;
+    if (!cat) return;
+    try {
+      const result = await api.deleteItemPayment(paymentId);
+      const idx = cat.items.findIndex((item) => item.id === result.item.id);
+      if (idx !== -1) cat.items[idx] = result.item;
+      categoryStatusInner(cat);
+      this.recomputeBudgetSummary();
+    } catch (e) {
+      this.error = errMessage(e);
+    }
+  }
+
   async deleteItem(itemId: string): Promise<void> {
     const cat = this.activeCategory;
     if (!cat) return;

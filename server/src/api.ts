@@ -231,8 +231,9 @@ api.patch("/payments/:id", zValidator("param", idParam), zValidator("json", paym
 });
 
 api.delete("/payments/:id", zValidator("param", idParam), (c) => {
-  deleteItemPayment(c.req.valid("param").id);
-  return c.json({ ok: true });
+  const paymentId = c.req.valid("param").id;
+  const itemId = deleteItemPayment(paymentId);
+  return c.json({ ok: true, item: getItemDetail(itemId) });
 });
 
 api.patch("/items/:id", zValidator("param", idParam), zValidator("json", itemUpdateSchema, validationHook), (c) => {
