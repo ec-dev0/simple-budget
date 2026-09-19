@@ -29,6 +29,7 @@ Simple Budget es una pequeña aplicación personal para **controlar un presupues
    - **Coste real** (lo que acabas pagando).
    - Estado **comprado** / **pendiente**.
 4. El saldo se calcula solo: gastado, pendiente, restante y porcentaje usado se actualizan en tiempo real al marcar un artículo.
+5. Puedes registrar **pagos parciales** de un artículo. Cada pago reduce el saldo real y se muestra cuánto queda por pagar.
 
 Está pensado para situaciones reales como **equipar una vivienda nueva**, un proyecto personal o cualquier lista de la compra con importe. No quiere ser un sistema financiero completo: la idea es «cuaderno abierto» que se entiende a la primera.
 

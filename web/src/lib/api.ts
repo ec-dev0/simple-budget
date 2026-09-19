@@ -9,6 +9,8 @@ import type {
   ImportResult,
   ItemInput,
   ItemRow,
+  ItemPayment,
+  PaymentInput,
 } from "./types.ts";
 import type { Locale } from "./i18n/index.svelte.ts";
 
@@ -105,6 +107,13 @@ export const api = {
     request<ItemRow>(`/categories/${categoryId}/items`, { method: "POST", body: JSON.stringify(input) }),
   updateItem: (id: string, input: ItemInput) =>
     request<ItemRow>(`/items/${id}`, { method: "PATCH", body: JSON.stringify(input) }),
+  getItem: (id: string) => request<ItemRow>(`/items/${id}`),
+  listItemPayments: (id: string) => request<ItemPayment[]>(`/items/${id}/payments`),
+  createItemPayment: (id: string, input: PaymentInput) =>
+    request<{ payment: ItemPayment; item: ItemRow }>(`/items/${id}/payments`, { method: "POST", body: JSON.stringify(input) }),
+  updateItemPayment: (id: string, input: Partial<PaymentInput>) =>
+    request<{ payment: ItemPayment; item: ItemRow }>(`/payments/${id}`, { method: "PATCH", body: JSON.stringify(input) }),
+  deleteItemPayment: (id: string) => request<{ ok: boolean }>(`/payments/${id}`, { method: "DELETE" }),
   purchaseItem: (id: string, purchased: boolean, actualCost?: number | null) =>
     request<ItemRow>(`/items/${id}/purchase`, {
       method: "PATCH",

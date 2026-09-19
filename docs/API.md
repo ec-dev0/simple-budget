@@ -284,6 +284,29 @@ Cuerpo:
 
 Mejor práctica: usa este endpoint cuando completes una compra, porque registra la fecha automáticamente.
 
+#### Pagos parciales
+
+Un artículo puede tener varios pagos. El coste real (`actualCost`) representa el coste final completo y los pagos representan el dinero abonado hasta el momento.
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET | `/api/items/:id/payments` | Lista los pagos del artículo. |
+| POST | `/api/items/:id/payments` | Añade un pago parcial o total. |
+| PATCH | `/api/payments/:id` | Edita un pago. |
+| DELETE | `/api/payments/:id` | Elimina un pago. |
+
+Ejemplo:
+
+```json
+{
+  "amount": 200,
+  "paidAt": "2026-09-19T10:00:00.000Z",
+  "note": "Primera cuota"
+}
+```
+
+El total de pagos no puede superar el coste real cuando este está definido. Los exports antiguos que no contienen `payments` se importan automáticamente; una compra antigua se convierte en un pago único por su `actual_cost`.
+
 #### `DELETE /api/items/:id`
 
 Borra el artículo. Responde `{ "ok": true }`.

@@ -21,10 +21,16 @@ import {
   createItem,
   updateItem,
   setPurchased,
+  getItemDetail,
+  listItemPayments,
+  createItemPayment,
+  updateItemPayment,
+  deleteItemPayment,
   deleteItem,
   getSettings,
   updateSettings,
   NotFoundError,
+  BusinessRuleError,
 } from "./repo.ts";
 import {
   budgetCreateSchema,
@@ -34,6 +40,8 @@ import {
   itemCreateSchema,
   itemUpdateSchema,
   purchaseSchema,
+  paymentCreateSchema,
+  paymentUpdateSchema,
   exportPayloadSchema,
   settingsUpdateSchema,
 } from "./validation.ts";
@@ -58,6 +66,9 @@ const ERR_FALLBACK: Record<string, string> = {
   ERR_ICON_TOO_LONG: "El identificador de icono es demasiado largo",
   ERR_PURCHASED_REQUIRED: "El estado de comprado es obligatorio",
   ERR_INVALID_QUANTITY: "La cantidad debe ser positiva",
+  ERR_INVALID_PAYMENT_AMOUNT: "El importe del pago debe ser positivo",
+  ERR_PAYMENT_NOTE_TOO_LONG: "La nota del pago es demasiado larga",
+  ERR_PAYMENT_EXCEEDS_ACTUAL_COST: "El total de pagos no puede superar el coste real",
   ERR_EMPTY_PATCH: "Debes enviar al menos un campo",
   ERR_NOT_FOUND: "Recurso no encontrado",
   ERR_INTERNAL: "Error interno del servidor",
@@ -201,7 +212,27 @@ api.post(
 
 api.get("/items/:id", zValidator("param", idParam), (c) => {
   const { id } = c.req.valid("param");
-  return c.json(getItem(id));
+  return c.json(getItemDetail(id));
+});
+
+api.get("/items/:id/payments", zValidator("param", idParam), (c) => {
+  return c.json(listItemPayments(c.req.valid("param").id));
+});
+
+api.post("/items/:id/payments", zValidator("param", idParam), zValidator("json", paymentCreateSchema, validationHook), (c) => {
+  const itemId = c.req.valid("param").id;
+  const payment = createItemPayment(itemId, c.req.valid("json"));
+  return c.json({ payment, item: getItemDetail(itemId) }, 201);
+});
+
+api.patch("/payments/:id", zValidator("param", idParam), zValidator("json", paymentUpdateSchema, validationHook), (c) => {
+  const payment = updateItemPayment(c.req.valid("param").id, c.req.valid("json"));
+  return c.json({ payment, item: getItemDetail(payment.item_id) });
+});
+
+api.delete("/payments/:id", zValidator("param", idParam), (c) => {
+  deleteItemPayment(c.req.valid("param").id);
+  return c.json({ ok: true });
 });
 
 api.patch("/items/:id", zValidator("param", idParam), zValidator("json", itemUpdateSchema, validationHook), (c) => {
@@ -264,6 +295,9 @@ api.onError((err, c) => {
       },
       404
     );
+  }
+  if (err instanceof BusinessRuleError) {
+    return c.json({ error: { code: err.code, message: ERR_FALLBACK[err.code] ?? err.code } }, 400);
   }
   if (err instanceof HTTPException) {
     return err.getResponse();

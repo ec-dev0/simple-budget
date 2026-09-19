@@ -9,11 +9,13 @@ import type { ItemRow } from "../lib/types.ts";
 let {
   item = null,
   purchaseMode = false,
+  paymentMode = false,
   onDone,
   onCancel,
 }: {
   item?: ItemRow | null;
   purchaseMode?: boolean;
+  paymentMode?: boolean;
   onDone?: () => void;
   onCancel?: () => void;
 } = $props();
@@ -47,6 +49,8 @@ let showDetails = $state(
   item ? Boolean(item.notes.length > 0 || item.description.length > 0 || item.link) : false
 );
 let saving = $state(false);
+let paymentAmount = $state("");
+let paymentNote = $state("");
 
 const PRIORITIES = [
   { v: 0, label: priorityLabel(0, true) },
@@ -62,6 +66,15 @@ $effect(() => {
 });
 
 async function submit() {
+  if (paymentMode) {
+    const amount = Number(paymentAmount);
+    if (!item || !Number.isFinite(amount) || amount <= 0) return;
+    saving = true;
+    await store.addPayment(item.id, { amount, note: paymentNote.trim() });
+    saving = false;
+    onDone?.();
+    return;
+  }
   if (!name.trim()) return;
   saving = true;
   const input = {
@@ -97,7 +110,7 @@ async function submit() {
 >
   <div class="flex items-center justify-between">
     <h3 class="text-sm font-semibold">
-      {purchaseMode ? t("item.purchaseTitle") : item ? t("item.editTitle") : t("item.createTitle")}
+      {paymentMode ? t("item.paymentTitle") : purchaseMode ? t("item.purchaseTitle") : item ? t("item.editTitle") : t("item.createTitle")}
     </h3>
     {#if onCancel}
       <button type="button" class={btnGhost} onclick={onCancel} aria-label={t("form.cancelAria")}>
@@ -106,11 +119,23 @@ async function submit() {
     {/if}
   </div>
 
+  {#if paymentMode}
+    <div>
+      <label class={labelCls} for="if-payment-amount">{t("item.paymentAmount")}</label>
+      <input id="if-payment-amount" class={inputNumCls} bind:value={paymentAmount} type="number" inputmode="decimal" min="0.01" step="0.01" placeholder={t("item.costPlaceholder")} required />
+    </div>
+    <div>
+      <label class={labelCls} for="if-payment-note">{t("item.paymentNote")}</label>
+      <input id="if-payment-note" class={inputCls} bind:value={paymentNote} placeholder={t("item.paymentNotePlaceholder")} autocomplete="off" />
+    </div>
+  {:else}
   <div>
     <label class={labelCls} for="if-name">{t("form.name")}</label>
     <input id="if-name" class={inputCls} bind:value={name} placeholder={t("item.namePlaceholder")} autocomplete="off" required />
   </div>
+  {/if}
 
+  {#if !paymentMode}
   <div class="grid grid-cols-[7rem_1fr] gap-4">
     <div>
       <label class={labelCls} for="if-qty">{t("item.quantity")}</label>
@@ -121,7 +146,9 @@ async function submit() {
       <input id="if-unit" class={inputCls} bind:value={unit} placeholder={t("item.unitPlaceholder")} autocomplete="off" />
     </div>
   </div>
+  {/if}
 
+  {#if !paymentMode}
   <div class="grid grid-cols-2 gap-4">
     <div>
       <label class={labelCls} for="if-est">{t("item.estimatedCost")}</label>
@@ -142,7 +169,9 @@ async function submit() {
       />
     </div>
   </div>
+  {/if}
 
+  {#if !paymentMode}
   <div class="flex items-center justify-between gap-4">
     <label class="flex items-center gap-2 text-sm cursor-pointer select-none" for="if-purchased">
       <input
@@ -165,7 +194,9 @@ async function submit() {
       {/each}
     </div>
   </div>
+  {/if}
 
+  {#if !paymentMode}
   <div class="grid grid-cols-2 gap-4">
     <div>
       <label class={labelCls} for="if-store">{t("item.store")}</label>
@@ -176,7 +207,9 @@ async function submit() {
       <input id="if-due" class={inputCls} bind:value={dueDate} type="date" />
     </div>
   </div>
+  {/if}
 
+  {#if !paymentMode}
   <button
     type="button"
     class="flex items-center gap-1 text-xs font-medium text-muted transition hover:text-ink"
@@ -203,14 +236,15 @@ async function submit() {
       </div>
     </div>
   {/if}
+  {/if}
 
   <div class="flex justify-end gap-2 pt-1">
     {#if onCancel}
       <button type="button" class={btnGhost} onclick={onCancel}>{t("form.cancel")}</button>
     {/if}
-    <button class={btnPrimary} disabled={saving || !name.trim()}>
+    <button class={btnPrimary} disabled={saving || (!paymentMode && !name.trim()) || (paymentMode && !paymentAmount)}>
       <Check size={15} aria-hidden="true" />
-      {purchaseMode ? t("item.submitBuy") : item ? t("item.submitSave") : t("item.submitAdd")}
+      {paymentMode ? t("item.submitPayment") : purchaseMode ? t("item.submitBuy") : item ? t("item.submitSave") : t("item.submitAdd")}
     </button>
   </div>
 </form>

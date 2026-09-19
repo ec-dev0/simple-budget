@@ -118,6 +118,23 @@ const migrations: Migration[] = [
       stmt.run("onboarded", "0", stamp);
     },
   },
+  {
+    version: 3,
+    name: "item-payments",
+    sql: `
+      CREATE TABLE IF NOT EXISTS item_payments (
+        id         TEXT PRIMARY KEY,
+        item_id    TEXT NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+        amount     REAL NOT NULL CHECK (amount > 0),
+        paid_at    TEXT NOT NULL,
+        note       TEXT NOT NULL DEFAULT '',
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_item_payments_item ON item_payments(item_id);
+    `,
+  },
 ];
 
 function runMigrations() {

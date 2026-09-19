@@ -1,5 +1,5 @@
 <script lang="ts">
-import { CalendarClock, Pencil, Store, Trash2 } from "lucide-svelte";
+import { CalendarClock, CreditCard, Pencil, Store, Trash2 } from "lucide-svelte";
 import { fmtDateStamp, money, relativeDate } from "../lib/format.ts";
 import { btnIcon, btnDangerGhost } from "../lib/ui.ts";
 import { t } from "../lib/i18n/index.svelte.ts";
@@ -11,12 +11,14 @@ let {
   onCheck,
   onEdit,
   onDelete,
+  onAddPayment,
 }: {
   item: ItemRow;
   currency: string;
   onCheck: (purchased: boolean) => void;
   onEdit: () => void;
   onDelete: () => void;
+  onAddPayment: () => void;
 } = $props();
 
 const bought = $derived(item.purchased === 1);
@@ -100,7 +102,12 @@ const qty = $derived(item.quantity !== 1 || item.unit ? `${Number(item.quantity)
       {#if item.estimated_cost != null}
         <p class="tnum text-xs text-muted">~{money(item.estimated_cost, currency)}</p>
       {/if}
-      {#if item.actual_cost != null}
+      {#if item.paymentSummary?.paidAmount}
+        <p class="tnum text-[15px] font-semibold text-ink">{money(item.paymentSummary.paidAmount, currency)}</p>
+        {#if item.paymentSummary.pendingAmount != null && item.paymentSummary.pendingAmount > 0}
+          <p class="tnum text-[11px] text-warning">{t("item.paymentPending", money(item.paymentSummary.pendingAmount, currency))}</p>
+        {/if}
+      {:else if item.actual_cost != null}
         <p class="tnum text-[15px] font-semibold {overEstimate || (bought && item.actual_cost > (item.estimated_cost ?? 0)) ? 'text-danger' : 'text-ink'}">
           {money(item.actual_cost, currency)}
         </p>
@@ -110,6 +117,14 @@ const qty = $derived(item.quantity !== 1 || item.unit ? `${Number(item.quantity)
       {/if}
     </div>
     <div class="item-actions flex items-center transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
+      <button
+        class={btnIcon + " min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:p-2"}
+        onclick={onAddPayment}
+        aria-label={t("item.addPaymentAria", item.name)}
+        title={t("item.addPayment")}
+      >
+        <CreditCard size={15} aria-hidden="true" />
+      </button>
       <button
         class={btnIcon + " min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 sm:p-2"}
         onclick={onEdit}

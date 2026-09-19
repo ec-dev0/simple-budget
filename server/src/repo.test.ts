@@ -72,6 +72,37 @@ describe("categories", () => {
 });
 
 describe("items", () => {
+  test("registra pagos parciales y los refleja en el resumen", () => {
+    const b = repo.createBudget({ name: "Cuotas", initialAmount: 1000 });
+    const c = repo.createCategory(b.id, { name: "C" });
+    const i = repo.createItem(c.id, { name: "Sofá", actualCost: 600 });
+
+    const first = repo.createItemPayment(i.id, { amount: 200, note: "Primera cuota" });
+    expect(first.amount).toBe(200);
+    expect(repo.getItemDetail(i.id).paymentSummary).toEqual({
+      paidAmount: 200,
+      pendingAmount: 400,
+      fullyPaid: false,
+    });
+    expect(repo.getBudgetSummary(b.id).spent).toBe(200);
+
+    repo.createItemPayment(i.id, { amount: 400 });
+    expect(repo.getItemDetail(i.id).paymentSummary).toEqual({
+      paidAmount: 600,
+      pendingAmount: 0,
+      fullyPaid: true,
+    });
+    expect(repo.getBudgetSummary(b.id).spent).toBe(600);
+  });
+
+  test("rechaza pagos que superan el coste real", () => {
+    const b = repo.createBudget({ name: "Cuotas límite" });
+    const c = repo.createCategory(b.id, { name: "C" });
+    const i = repo.createItem(c.id, { name: "Mesa", actualCost: 100 });
+    repo.createItemPayment(i.id, { amount: 80 });
+    expect(() => repo.createItemPayment(i.id, { amount: 21 })).toThrow("ERR_PAYMENT_EXCEEDS_ACTUAL_COST");
+  });
+
   test("marcar comprado registra fecha y coste real", () => {
     const b = repo.createBudget({ name: "Items" });
     const c = repo.createCategory(b.id, { name: "C" });

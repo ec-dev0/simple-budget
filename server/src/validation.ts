@@ -19,6 +19,8 @@ const msg = {
   iconTooLong: code("ERR_ICON_TOO_LONG", "El identificador de icono es demasiado largo"),
   purchasedRequired: code("ERR_PURCHASED_REQUIRED", "El estado de comprado es obligatorio"),
   quantityInvalid: code("ERR_INVALID_QUANTITY", "La cantidad debe ser positiva"),
+  paymentAmountInvalid: code("ERR_INVALID_PAYMENT_AMOUNT", "El importe del pago debe ser positivo"),
+  paymentNoteTooLong: code("ERR_PAYMENT_NOTE_TOO_LONG", "La nota del pago es demasiado larga"),
 };
 
 const optionalMoney = z
@@ -103,6 +105,14 @@ export const purchaseSchema = z.object({
   purchasedAt: z.string().nullable().optional(),
 });
 
+export const paymentCreateSchema = z.object({
+  amount: z.number().finite().positive(msg.paymentAmountInvalid.message),
+  paidAt: z.string().datetime({ offset: true }).nullable().optional(),
+  note: z.string().max(500, msg.paymentNoteTooLong.message).default(""),
+});
+
+export const paymentUpdateSchema = paymentCreateSchema.partial();
+
 // ─── Export / Import ────────────────────────────────────────────────────────
 
 const exportedItemSchema = z.object({
@@ -124,6 +134,15 @@ const exportedItemSchema = z.object({
   sort_order: z.number().int(),
   created_at: z.string(),
   updated_at: z.string(),
+  payments: z.array(z.object({
+    id: z.string().min(1),
+    item_id: z.string().min(1),
+    amount: z.number().positive(),
+    paid_at: z.string(),
+    note: z.string(),
+    created_at: z.string(),
+    updated_at: z.string(),
+  })).optional(),
 });
 
 const exportedCategorySchema = z.object({

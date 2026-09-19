@@ -50,6 +50,27 @@ export type ItemRow = {
   updated_at: string;
 };
 
+export type ItemPaymentRow = {
+  id: string;
+  item_id: string;
+  amount: number;
+  paid_at: string;
+  note: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ItemPaymentSummary = {
+  paidAmount: number;
+  pendingAmount: number | null;
+  fullyPaid: boolean;
+};
+
+export type ItemDetail = ItemRow & {
+  payments: ItemPaymentRow[];
+  paymentSummary: ItemPaymentSummary;
+};
+
 export type CategorySummary = {
   limit: number | null;
   spent: number;
@@ -77,6 +98,13 @@ export class NotFoundError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "NotFoundError";
+  }
+}
+
+export class BusinessRuleError extends Error {
+  constructor(public code: string) {
+    super(code);
+    this.name = "BusinessRuleError";
   }
 }
 
@@ -278,6 +306,84 @@ export function getItem(id: string): ItemRow {
   return row as ItemRow;
 }
 
+function paymentRows(itemId: string): ItemPaymentRow[] {
+  return db
+    .query("SELECT * FROM item_payments WHERE item_id = ? ORDER BY paid_at ASC, created_at ASC")
+    .all(itemId) as ItemPaymentRow[];
+}
+
+function paymentSummary(item: ItemRow, payments: ItemPaymentRow[]): ItemPaymentSummary {
+  const paidAmount = round2(payments.reduce((sum, payment) => sum + payment.amount, 0)) ?? 0;
+  const pendingAmount = item.actual_cost === null ? null : round2(Math.max(0, item.actual_cost - paidAmount));
+  return {
+    paidAmount,
+    pendingAmount,
+    fullyPaid: item.actual_cost !== null && paidAmount >= item.actual_cost,
+  };
+}
+
+export function getItemDetail(id: string): ItemDetail {
+  const item = getItem(id);
+  const payments = paymentRows(id);
+  return { ...item, payments, paymentSummary: paymentSummary(item, payments) };
+}
+
+export function listItemPayments(itemId: string): ItemPaymentRow[] {
+  getItem(itemId);
+  return paymentRows(itemId);
+}
+
+function validatePaymentTotal(item: ItemRow, amount: number, replacingPaymentId?: string): void {
+  if (item.actual_cost === null) return;
+  const existing = paymentRows(item.id)
+    .filter((payment) => payment.id !== replacingPaymentId)
+    .reduce((sum, payment) => sum + payment.amount, 0);
+  if (existing + amount > item.actual_cost + 0.005) {
+    throw new BusinessRuleError("ERR_PAYMENT_EXCEEDS_ACTUAL_COST");
+  }
+}
+
+export function createItemPayment(
+  itemId: string,
+  input: { amount: number; paidAt?: string | null; note?: string }
+): ItemPaymentRow {
+  const item = getItem(itemId);
+  validatePaymentTotal(item, input.amount);
+  const id = newId();
+  const now = nowIso();
+  db.query(
+    `INSERT INTO item_payments (id, item_id, amount, paid_at, note, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`
+  ).run(id, itemId, round2(input.amount), input.paidAt ?? now, input.note ?? "", now, now);
+  return db.query("SELECT * FROM item_payments WHERE id = ?").get(id) as ItemPaymentRow;
+}
+
+export function updateItemPayment(
+  id: string,
+  input: { amount?: number; paidAt?: string | null; note?: string }
+): ItemPaymentRow {
+  const payment = db.query("SELECT * FROM item_payments WHERE id = ?").get(id) as ItemPaymentRow | null;
+  if (!payment) throw new NotFoundError("Pago no encontrado");
+  const item = getItem(payment.item_id);
+  const amount = input.amount ?? payment.amount;
+  validatePaymentTotal(item, amount, id);
+  const fields: string[] = [];
+  const values: SQLQueryBindings[] = [];
+  if (input.amount !== undefined) { fields.push("amount = ?"); values.push(round2(input.amount)); }
+  if (input.paidAt !== undefined) { fields.push("paid_at = ?"); values.push(input.paidAt ?? nowIso()); }
+  if (input.note !== undefined) { fields.push("note = ?"); values.push(input.note); }
+  if (fields.length === 0) return payment;
+  fields.push("updated_at = ?");
+  values.push(nowIso());
+  db.query(`UPDATE item_payments SET ${fields.join(", ")} WHERE id = ?`).run(...values, id);
+  return db.query("SELECT * FROM item_payments WHERE id = ?").get(id) as ItemPaymentRow;
+}
+
+export function deleteItemPayment(id: string): void {
+  const result = db.query("DELETE FROM item_payments WHERE id = ?").run(id);
+  if (result.changes === 0) throw new NotFoundError("Pago no encontrado");
+}
+
 export function createItem(
   categoryId: string,
   input: {
@@ -385,7 +491,7 @@ export function setPurchased(
   actualCost?: number | null,
   purchasedAt?: string | null
 ): ItemRow {
-  getItem(id);
+  const item = getItem(id);
   const fields: string[] = ["purchased = ?", "purchased_at = ?", "updated_at = ?"];
   const values: SQLQueryBindings[] = [purchased ? 1 : 0, purchased ? purchasedAt ?? nowIso() : null, nowIso()];
   if (actualCost !== undefined) {
@@ -393,6 +499,12 @@ export function setPurchased(
     values.push(round2(actualCost));
   }
   db.query(`UPDATE items SET ${fields.join(", ")} WHERE id = ?`).run(...values, id);
+  if (purchased && actualCost !== undefined && actualCost !== null) {
+    const existingPayments = paymentRows(id);
+    if (existingPayments.length === 0) {
+      createItemPayment(id, { amount: actualCost, paidAt: purchasedAt });
+    }
+  }
   return getItem(id);
 }
 
@@ -408,8 +520,9 @@ function categorySummary(rows: ItemRow[]): CategorySummary {
   let pendingEstimated = 0;
   let purchasedCount = 0;
   for (const it of rows) {
-    if (it.purchased === 1) {
-      spent += it.actual_cost ?? it.estimated_cost ?? 0;
+    const payments = paymentRows(it.id);
+    if (it.purchased === 1 || payments.length > 0) {
+      spent += payments.length > 0 ? payments.reduce((sum, payment) => sum + payment.amount, 0) : it.actual_cost ?? it.estimated_cost ?? 0;
       purchasedCount++;
     } else {
       pendingEstimated += it.estimated_cost ?? 0;
@@ -451,8 +564,9 @@ export function getBudgetSummary(budgetId: string): BudgetSummary {
     const rows = listItems(c.id, true);
     for (const it of rows) {
       itemCount++;
-      if (it.purchased === 1) {
-        spent += it.actual_cost ?? it.estimated_cost ?? 0;
+      const payments = paymentRows(it.id);
+      if (it.purchased === 1 || payments.length > 0) {
+        spent += payments.length > 0 ? payments.reduce((sum, payment) => sum + payment.amount, 0) : it.actual_cost ?? it.estimated_cost ?? 0;
         purchasedCount++;
       } else {
         committed += it.estimated_cost ?? 0;
@@ -473,14 +587,14 @@ export function getBudgetSummary(budgetId: string): BudgetSummary {
   };
 }
 
-export type CategoryDetail = CategoryRow & { items: ItemRow[]; summary: CategorySummary };
+export type CategoryDetail = CategoryRow & { items: ItemDetail[]; summary: CategorySummary };
 export type BudgetDetail = BudgetRow & { categories: CategoryDetail[]; summary: BudgetSummary };
 
 export function getBudgetDetail(budgetId: string): BudgetDetail {
   const budget = getBudget(budgetId);
   const cats = listCategories(budgetId, true);
   const categories: CategoryDetail[] = cats.map((c) => {
-    const items = listItems(c.id, true);
+    const items = listItems(c.id, true).map((item) => getItemDetail(item.id));
     const s = categorySummary(items);
     if (c.limit_amount !== null) {
       s.limit = round2(c.limit_amount);

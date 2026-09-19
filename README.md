@@ -27,6 +27,7 @@ Simple Budget is a small personal app to **control a budget** in a simple, funct
    - **Actual cost** (what you end up paying).
    - **Bought** / **pending** state.
 4. The balance computes itself: spent, pending, remaining and used percentage update in real time as you tick items off.
+5. You can register **partial payments** for an item. Each payment reduces the real remaining balance and the item shows the amount still outstanding.
 
 It's built for real situations like **kitting out a new home**, a personal project, or any shopping list with amounts. It doesn't try to be a full financial system: the idea is an "open notebook" you understand at first sight.
 

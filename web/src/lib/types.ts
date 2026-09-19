@@ -45,6 +45,24 @@ export type ItemRow = {
   sort_order: number;
   created_at: string;
   updated_at: string;
+  payments?: ItemPayment[];
+  paymentSummary?: ItemPaymentSummary;
+};
+
+export type ItemPayment = {
+  id: string;
+  item_id: string;
+  amount: number;
+  paid_at: string;
+  note: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ItemPaymentSummary = {
+  paidAmount: number;
+  pendingAmount: number | null;
+  fullyPaid: boolean;
 };
 
 export type BudgetSummary = {
@@ -103,6 +121,12 @@ export type ItemInput = {
   link?: string | null;
   dueDate?: string | null;
   notes?: string;
+};
+
+export type PaymentInput = {
+  amount: number;
+  paidAt?: string | null;
+  note?: string;
 };
 
 export type BudgetStatus = "slack" | "tight" | "over";

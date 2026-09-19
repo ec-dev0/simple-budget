@@ -63,7 +63,7 @@ describe("export / import — roundtrip", () => {
     expect(payload.version).toBe(1);
     expect(payload.app).toBe("simple-budget");
     expect(typeof payload.exportedAt).toBe("string");
-    expect(payload.schemaVersion).toBe(2);
+    expect(payload.schemaVersion).toBe(3);
     expect(payload.budgets).toHaveLength(2);
   });
 
@@ -110,6 +110,22 @@ describe("export / import — roundtrip", () => {
     expect(b1After.categories[1]!.items[0]!.name).toBe("Sofá");
     expect(b1After.categories[1]!.items[0]!.due_date).toBe("2026-10-01");
     expect(b1After.summary.spent).toBe(529);
+  });
+
+  test("importa un export antiguo creando un pago legado único", () => {
+    wipe();
+    const ids = seed();
+    const payload = exportAll();
+    for (const budget of payload.budgets) {
+      for (const category of budget.categories) {
+        for (const item of category.items) delete item.payments;
+      }
+    }
+    wipe();
+    importAll(payload);
+    const item = repo.getBudgetDetail(ids.b1.id).categories[0]!.items.find((it) => it.name === "Placa")!;
+    expect(item.payments).toHaveLength(1);
+    expect(item.payments![0]!.amount).toBe(529);
   });
 
   test("reimportar el mismo archivo no duplica filas", () => {

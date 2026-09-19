@@ -10,6 +10,7 @@ import type {
   ImportResult,
   ItemInput,
   ItemRow,
+  PaymentInput,
 } from "./types.ts";
 import { i18n, t } from "./i18n/index.svelte.ts";
 
@@ -238,6 +239,20 @@ class SimpleBudgetStore {
     }
   }
 
+  async addPayment(itemId: string, input: PaymentInput): Promise<void> {
+    const cat = this.activeCategory;
+    if (!cat) return;
+    try {
+      const result = await api.createItemPayment(itemId, input);
+      const idx = cat.items.findIndex((item) => item.id === itemId);
+      if (idx !== -1) cat.items[idx] = result.item;
+      categoryStatusInner(cat);
+      this.recomputeBudgetSummary();
+    } catch (e) {
+      this.error = errMessage(e);
+    }
+  }
+
   async deleteItem(itemId: string): Promise<void> {
     const cat = this.activeCategory;
     if (!cat) return;
@@ -286,8 +301,8 @@ class SimpleBudgetStore {
     for (const c of this.current.categories) {
       for (const it of c.items) {
         itemCount++;
-        if (it.purchased === 1) {
-          spent += it.actual_cost ?? it.estimated_cost ?? 0;
+        if (it.purchased === 1 || (it.paymentSummary?.paidAmount ?? 0) > 0) {
+          spent += it.paymentSummary?.paidAmount ?? it.actual_cost ?? it.estimated_cost ?? 0;
           purchasedCount++;
         } else {
           committed += it.estimated_cost ?? 0;
