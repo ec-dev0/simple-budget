@@ -343,6 +343,11 @@ function validatePaymentTotal(item: ItemRow, amount: number, replacingPaymentId?
   }
 }
 
+function itemSpent(item: ItemRow, payments: ItemPaymentRow[]): number {
+  if (item.purchased === 1) return item.actual_cost ?? item.estimated_cost ?? 0;
+  return payments.reduce((sum, payment) => sum + payment.amount, 0);
+}
+
 export function createItemPayment(
   itemId: string,
   input: { amount: number; paidAt?: string | null; note?: string }
@@ -475,6 +480,14 @@ export function updateItem(
     const nextPurchased = input.purchased ? true : false;
     const isPurchased = existing.purchased === 1;
     if (nextPurchased !== isPurchased) {
+      if (nextPurchased) {
+        const purchaseCost = input.actualCost !== undefined
+          ? round2(input.actualCost)
+          : existing.actual_cost ?? existing.estimated_cost;
+        if (purchaseCost === null) throw new BusinessRuleError("ERR_PURCHASE_REQUIRES_ACTUAL_COST");
+        fields.push("actual_cost = ?");
+        values.push(purchaseCost);
+      }
       fields.push("purchased = ?");
       fields.push("purchased_at = ?");
       values.push(nextPurchased ? 1 : 0, nextPurchased ? existing.purchased_at ?? nowIso() : null);
@@ -495,19 +508,24 @@ export function setPurchased(
   purchasedAt?: string | null
 ): ItemRow {
   const item = getItem(id);
-  const fields: string[] = ["purchased = ?", "purchased_at = ?", "updated_at = ?"];
-  const values: SQLQueryBindings[] = [purchased ? 1 : 0, purchased ? purchasedAt ?? nowIso() : null, nowIso()];
-  if (actualCost !== undefined) {
-    fields.push("actual_cost = ?");
-    values.push(round2(actualCost));
-  }
-  db.query(`UPDATE items SET ${fields.join(", ")} WHERE id = ?`).run(...values, id);
-  if (purchased && actualCost !== undefined && actualCost !== null) {
-    const existingPayments = paymentRows(id);
-    if (existingPayments.length === 0) {
-      createItemPayment(id, { amount: actualCost, paidAt: purchasedAt });
-    }
-  }
+  const nextActualCost = actualCost === undefined
+    ? item.actual_cost ?? (purchased ? item.estimated_cost : null)
+    : round2(actualCost);
+  if (purchased && nextActualCost === null) throw new BusinessRuleError("ERR_PURCHASE_REQUIRES_ACTUAL_COST");
+
+  db.transaction(() => {
+    db.query(
+      `UPDATE items
+       SET purchased = ?, purchased_at = ?, actual_cost = ?, updated_at = ?
+       WHERE id = ?`
+    ).run(
+      purchased ? 1 : 0,
+      purchased ? purchasedAt ?? nowIso() : null,
+      nextActualCost,
+      nowIso(),
+      id
+    );
+  })();
   return getItem(id);
 }
 
@@ -525,7 +543,7 @@ function categorySummary(rows: ItemRow[]): CategorySummary {
   for (const it of rows) {
     const payments = paymentRows(it.id);
     if (it.purchased === 1 || payments.length > 0) {
-      spent += payments.length > 0 ? payments.reduce((sum, payment) => sum + payment.amount, 0) : it.actual_cost ?? it.estimated_cost ?? 0;
+      spent += itemSpent(it, payments);
       purchasedCount++;
     } else {
       pendingEstimated += it.estimated_cost ?? 0;
@@ -569,7 +587,7 @@ export function getBudgetSummary(budgetId: string): BudgetSummary {
       itemCount++;
       const payments = paymentRows(it.id);
       if (it.purchased === 1 || payments.length > 0) {
-        spent += payments.length > 0 ? payments.reduce((sum, payment) => sum + payment.amount, 0) : it.actual_cost ?? it.estimated_cost ?? 0;
+        spent += itemSpent(it, payments);
         purchasedCount++;
       } else {
         committed += it.estimated_cost ?? 0;
@@ -607,6 +625,10 @@ export function getBudgetDetail(budgetId: string): BudgetDetail {
     return { ...c, items, summary: s };
   });
   return { ...budget, categories, summary: getBudgetSummary(budgetId) };
+}
+
+export function recalculateBudget(budgetId: string): BudgetDetail {
+  return getBudgetDetail(budgetId);
 }
 
 export type Locale = "es" | "en";

@@ -8,6 +8,7 @@ import type {
   ExportPayload,
   ImportResult,
   ItemInput,
+  ItemDetail,
   ItemRow,
   ItemPayment,
   PaymentInput,
@@ -89,6 +90,7 @@ export const api = {
 
   listBudgets: () => request<BudgetRow[]>("/budgets"),
   getBudget: (id: string) => request<BudgetDetail>(`/budgets/${id}`),
+  recalculateBudget: (id: string) => request<BudgetDetail>(`/budgets/${id}/recalculate`, { method: "POST" }),
   createBudget: (input: BudgetInput) =>
     request<BudgetRow>("/budgets", { method: "POST", body: JSON.stringify(input) }),
   updateBudget: (id: string, input: BudgetInput) =>
@@ -110,13 +112,13 @@ export const api = {
   getItem: (id: string) => request<ItemRow>(`/items/${id}`),
   listItemPayments: (id: string) => request<ItemPayment[]>(`/items/${id}/payments`),
   createItemPayment: (id: string, input: PaymentInput) =>
-    request<{ payment: ItemPayment; item: ItemRow }>(`/items/${id}/payments`, { method: "POST", body: JSON.stringify(input) }),
+    request<{ payment: ItemPayment; item: ItemDetail }>(`/items/${id}/payments`, { method: "POST", body: JSON.stringify(input) }),
   updateItemPayment: (id: string, input: Partial<PaymentInput>) =>
-    request<{ payment: ItemPayment; item: ItemRow }>(`/payments/${id}`, { method: "PATCH", body: JSON.stringify(input) }),
+    request<{ payment: ItemPayment; item: ItemDetail }>(`/payments/${id}`, { method: "PATCH", body: JSON.stringify(input) }),
   deleteItemPayment: (id: string) =>
-    request<{ ok: boolean; item: ItemRow }>(`/payments/${id}`, { method: "DELETE" }),
+    request<{ ok: boolean; item: ItemDetail }>(`/payments/${id}`, { method: "DELETE" }),
   purchaseItem: (id: string, purchased: boolean, actualCost?: number | null) =>
-    request<ItemRow>(`/items/${id}/purchase`, {
+    request<ItemDetail>(`/items/${id}/purchase`, {
       method: "PATCH",
       body: JSON.stringify({ purchased, actualCost }),
     }),

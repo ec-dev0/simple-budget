@@ -276,6 +276,25 @@ describe("API endpoints", () => {
     expect(counts()).toEqual({ budgets: 2, categories: 3, items: 4 });
   });
 
+  test("POST /api/budgets/:id/recalculate devuelve resúmenes sincronizados", async () => {
+    wipe();
+    const budget = repo.createBudget({ name: "Recalculate endpoint", initialAmount: 1000 });
+    const category = repo.createCategory(budget.id, { name: "Category" });
+    const item = repo.createItem(category.id, {
+      name: "Imported purchase",
+      estimatedCost: 400,
+      actualCost: 500,
+      purchased: true,
+    });
+    repo.createItemPayment(item.id, { amount: 300 });
+
+    const res = await api.request(`/budgets/${budget.id}/recalculate`, { method: "POST" });
+    expect(res.status).toBe(200);
+    const result = (await res.json()) as Awaited<ReturnType<typeof repo.getBudgetDetail>>;
+    expect(result.summary.spent).toBe(500);
+    expect(result.categories[0]!.summary.spent).toBe(500);
+  });
+
   test("POST /api/import rechaza payload con format incorrecto (400)", async () => {
     wipe();
     seed();

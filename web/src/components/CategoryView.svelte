@@ -54,7 +54,7 @@ async function handleCheck(item: ItemRowType, purchased: boolean) {
     showHint(t("item.missingActualCostHint"));
     return;
   }
-  await store.togglePurchased(item, purchased);
+  await store.togglePurchased(item, purchased, item.actual_cost);
 }
 
 async function askDeleteCategory() {

@@ -88,7 +88,8 @@ export type CategorySummary = {
   usedPct: number | null;
 };
 
-export type CategoryDetail = CategoryRow & { items: ItemRow[]; summary: CategorySummary };
+export type ItemDetail = ItemRow & { payments: ItemPayment[]; paymentSummary: ItemPaymentSummary };
+export type CategoryDetail = CategoryRow & { items: ItemDetail[]; summary: CategorySummary };
 export type BudgetDetail = BudgetRow & { categories: CategoryDetail[]; summary: BudgetSummary };
 
 export type BudgetInput = {

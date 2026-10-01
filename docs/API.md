@@ -171,6 +171,10 @@ Respuesta `201`: el presupuesto recién creado.
 
 Devuelve el **detalle completo** del presupuesto: sus categorías (con sus artículos y resumen) y el resumen global.
 
+#### `POST /api/budgets/:id/recalculate`
+
+Vuelve a generar el detalle y los resúmenes derivados del presupuesto desde los artículos y pagos guardados. No modifica ni crea artículos, costes o pagos. La web usa esta operación para corregir resúmenes desactualizados después de importar datos.
+
 #### `PATCH /api/budgets/:id`
 
 Actualiza uno o más campos. Acepta cualquier subconjunto del cuerpo de creación. Campos extra: `archived` (`true`/`false`) para ocultar el presupuesto.

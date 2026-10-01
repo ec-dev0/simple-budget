@@ -1,5 +1,5 @@
 <script lang="ts">
-import { CalendarClock, CheckCircle2, Pencil, PiggyBank, Target, Trash2 } from "lucide-svelte";
+import { CalendarClock, CheckCircle2, Pencil, PiggyBank, RefreshCw, Target, Trash2 } from "lucide-svelte";
 import { store } from "../lib/store.svelte.ts";
 import { money } from "../lib/format.ts";
 import { btnGhost, btnDangerGhost } from "../lib/ui.ts";
@@ -11,6 +11,7 @@ import ProgressBar from "./ProgressBar.svelte";
 let { onEdit }: { onEdit: () => void } = $props();
 
 let confirming = $state(false);
+let recalculating = $state(false);
 let timer: ReturnType<typeof setTimeout> | null = null;
 
 const summary: BudgetSummary | null = $derived(store.current?.summary ?? null);
@@ -26,6 +27,13 @@ function askDelete() {
   timer = setTimeout(() => {
     confirming = false;
   }, 3000);
+}
+
+async function recalculate() {
+  if (recalculating) return;
+  recalculating = true;
+  await store.recalculateCurrentBudget();
+  recalculating = false;
 }
 </script>
 
@@ -48,6 +56,16 @@ function askDelete() {
         </div>
       </div>
       <div class="flex items-center">
+        <button
+          type="button"
+          class={btnGhost}
+          onclick={recalculate}
+          disabled={recalculating}
+          aria-label={t("summary.recalculateAria")}
+          title={t("summary.recalculateTitle")}
+        >
+          <RefreshCw size={15} class={recalculating ? "animate-spin" : ""} aria-hidden="true" />
+        </button>
         <button class={btnGhost} onclick={onEdit} aria-label={t("budget.updateAria")} title={t("budget.updateAria")}>
           <Pencil size={15} aria-hidden="true" />
         </button>

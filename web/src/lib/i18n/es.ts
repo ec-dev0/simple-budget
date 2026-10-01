@@ -183,6 +183,8 @@ const es = {
     pending: "Pendiente",
     remaining: "Restante",
     used: "Usado",
+    recalculateTitle: "Recalcular importes del presupuesto",
+    recalculateAria: "Recalcular importes del presupuesto",
     purchasedOfTotal: (purchased: number, total: number) =>
       `${purchased} de ${total} artículos comprados`,
     addFirstCategory: "— añade tu primera categoría",

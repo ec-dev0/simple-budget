@@ -185,6 +185,8 @@ const en: Dict = {
     pending: "Pending",
     remaining: "Remaining",
     used: "Used",
+    recalculateTitle: "Recalculate budget amounts",
+    recalculateAria: "Recalculate budget amounts",
     purchasedOfTotal: (purchased: number, total: number) =>
       `${purchased} of ${total} items bought`,
     addFirstCategory: "— add your first category",

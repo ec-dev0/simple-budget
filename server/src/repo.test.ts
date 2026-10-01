@@ -95,6 +95,49 @@ describe("items", () => {
     expect(repo.getBudgetSummary(b.id).spent).toBe(600);
   });
 
+  test("al marcar comprado, gastado pasa de pagos parciales al coste real completo", () => {
+    const b = repo.createBudget({ name: "Coste final", initialAmount: 1000 });
+    const c = repo.createCategory(b.id, { name: "C", limitAmount: 800 });
+    const i = repo.createItem(c.id, { name: "Mueble", estimatedCost: 400, actualCost: 400 });
+
+    repo.createItemPayment(i.id, { amount: 400 });
+    expect(repo.getBudgetSummary(b.id).spent).toBe(400);
+    expect(repo.getCategorySummary(c.id).spent).toBe(400);
+
+    repo.setPurchased(i.id, true, 500);
+    expect(repo.getItemDetail(i.id).paymentSummary.paidAmount).toBe(400);
+    expect(repo.getBudgetSummary(b.id).spent).toBe(500);
+    expect(repo.getCategorySummary(c.id).spent).toBe(500);
+    expect(repo.getBudgetSummary(b.id).committed).toBe(0);
+  });
+
+  test("pagar parcialmente un artículo comprado no reduce gastado por debajo del coste real", () => {
+    const b = repo.createBudget({ name: "Pago compra", initialAmount: 1000 });
+    const c = repo.createCategory(b.id, { name: "C" });
+    const i = repo.createItem(c.id, { name: "Electrodoméstico", estimatedCost: 400, actualCost: 500 });
+
+    repo.setPurchased(i.id, true);
+    expect(repo.getBudgetSummary(b.id).spent).toBe(500);
+
+    repo.createItemPayment(i.id, { amount: 250 });
+    expect(repo.getBudgetSummary(b.id).spent).toBe(500);
+    expect(repo.getCategorySummary(c.id).spent).toBe(500);
+  });
+
+  test("editar o eliminar pagos de un artículo comprado conserva gastado igual al coste real", () => {
+    const b = repo.createBudget({ name: "Pagos después de comprar", initialAmount: 1000 });
+    const c = repo.createCategory(b.id, { name: "C" });
+    const i = repo.createItem(c.id, { name: "Compra", estimatedCost: 400, actualCost: 500 });
+    const payment = repo.createItemPayment(i.id, { amount: 250 });
+    repo.setPurchased(i.id, true);
+
+    repo.updateItemPayment(payment.id, { amount: 300 });
+    expect(repo.getBudgetSummary(b.id).spent).toBe(500);
+
+    repo.deleteItemPayment(payment.id);
+    expect(repo.getBudgetSummary(b.id).spent).toBe(500);
+  });
+
   test("rechaza pagos que superan el coste real", () => {
     const b = repo.createBudget({ name: "Cuotas límite" });
     const c = repo.createCategory(b.id, { name: "C" });
@@ -135,6 +178,26 @@ describe("items", () => {
     expect(pending.purchased_at).toBeNull();
   });
 
+  test("no permite marcar comprado si no hay ningún coste registrado", () => {
+    const b = repo.createBudget({ name: "Compra sin coste" });
+    const c = repo.createCategory(b.id, { name: "C" });
+    const i = repo.createItem(c.id, { name: "Artículo" });
+
+    expect(() => repo.setPurchased(i.id, true)).toThrow("ERR_PURCHASE_REQUIRES_ACTUAL_COST");
+    expect(repo.getItem(i.id).purchased).toBe(0);
+  });
+
+  test("al editar y marcar comprado, guarda el coste real antes de calcular el resumen", () => {
+    const b = repo.createBudget({ name: "Compra desde formulario", initialAmount: 1000 });
+    const c = repo.createCategory(b.id, { name: "C" });
+    const i = repo.createItem(c.id, { name: "Artículo", estimatedCost: 400 });
+
+    const bought = repo.updateItem(i.id, { actualCost: 500, purchased: true });
+    expect(bought.actual_cost).toBe(500);
+    expect(bought.purchased).toBe(1);
+    expect(repo.getBudgetSummary(b.id).spent).toBe(500);
+  });
+
   test("borrar categoría borra sus artículos en cascada", () => {
     const b = repo.createBudget({ name: "Cascada" });
     const c = repo.createCategory(b.id, { name: "C" });
@@ -151,6 +214,19 @@ describe("items", () => {
     expect(d.categories).toHaveLength(1);
     expect(d.categories[0]!.summary.spent).toBe(80);
     expect(d.categories[0]!.items).toHaveLength(1);
+  });
+
+  test("recalcular devuelve resumen derivado de pagos y coste real almacenados", () => {
+    const b = repo.createBudget({ name: "Recalcular", initialAmount: 1000 });
+    const c = repo.createCategory(b.id, { name: "C" });
+    const item = repo.createItem(c.id, { name: "Compra", estimatedCost: 400, actualCost: 500 });
+    repo.createItemPayment(item.id, { amount: 150 });
+    repo.setPurchased(item.id, true);
+
+    const recalculated = repo.recalculateBudget(b.id);
+    expect(recalculated.summary.spent).toBe(500);
+    expect(recalculated.categories[0]!.summary.spent).toBe(500);
+    expect(recalculated.categories[0]!.items[0]!.paymentSummary.paidAmount).toBe(150);
   });
 });
 

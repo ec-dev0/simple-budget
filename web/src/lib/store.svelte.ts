@@ -8,6 +8,7 @@ import type {
   CategorySummary,
   ExportPayload,
   ImportResult,
+  ItemDetail,
   ItemInput,
   ItemRow,
   PaymentInput,
@@ -35,8 +36,11 @@ function categoryStatusInner(cat: CategoryDetail): void {
   let pending = 0;
   let purchasedCount = 0;
   for (const it of cat.items) {
-    if (it.purchased === 1) {
-      spent += it.actual_cost ?? it.estimated_cost ?? 0;
+    const paidAmount = it.paymentSummary?.paidAmount ?? 0;
+    if (it.purchased === 1 || paidAmount > 0) {
+      spent += it.purchased === 1
+        ? it.actual_cost ?? it.estimated_cost ?? 0
+        : paidAmount;
       purchasedCount++;
     } else {
       pending += it.estimated_cost ?? 0;
@@ -133,6 +137,26 @@ class SimpleBudgetStore {
     }
   }
 
+  async recalculateCurrentBudget(): Promise<void> {
+    if (!this.current) return;
+    this.loadingBudget = true;
+    this.error = null;
+    try {
+      const keep = this.activeCategoryId;
+      const detail = await api.recalculateBudget(this.current.id);
+      this.current = detail;
+      if (keep && detail.categories.some((category) => category.id === keep)) {
+        this.activeCategoryId = keep;
+      } else {
+        this.activeCategoryId = detail.categories[0]?.id ?? null;
+      }
+    } catch (e) {
+      this.error = errMessage(e);
+    } finally {
+      this.loadingBudget = false;
+    }
+  }
+
   // ─── Presupuestos ─────────────────────────────────────────────────────────
 
   async createBudget(input: BudgetInput): Promise<void> {
@@ -216,7 +240,8 @@ class SimpleBudgetStore {
     const cat = this.activeCategory;
     if (!cat) return;
     try {
-      const item = await api.createItem(cat.id, input);
+      const created = await api.createItem(cat.id, input);
+      const item = await api.getItem(created.id) as ItemDetail;
       cat.items = [...cat.items, item];
       categoryStatusInner(cat);
       this.recomputeBudgetSummary();
@@ -231,7 +256,13 @@ class SimpleBudgetStore {
     try {
       const updated = await api.updateItem(itemId, input);
       const idx = cat.items.findIndex((i) => i.id === itemId);
-      if (idx !== -1) cat.items[idx] = { ...cat.items[idx]!, ...updated };
+      if (idx !== -1) {
+        const previous = cat.items[idx]!;
+        cat.items[idx] = { ...previous, ...updated };
+        if (updated.actual_cost !== previous.actual_cost) {
+          cat.items[idx] = await api.getItem(itemId) as ItemDetail;
+        }
+      }
       categoryStatusInner(cat);
       this.recomputeBudgetSummary();
     } catch (e) {
@@ -300,18 +331,21 @@ class SimpleBudgetStore {
     const idx = cat.items.findIndex((i) => i.id === item.id);
     if (idx === -1) return;
     const prev = cat.items[idx]!;
-    const optimistic: ItemRow = {
+    const nextActualCost = actualCost === undefined ? prev.actual_cost : actualCost;
+    const optimistic: ItemDetail = {
       ...prev,
       purchased: purchased ? 1 : 0,
       purchased_at: purchased ? new Date().toISOString() : null,
-      actual_cost: actualCost ?? prev.actual_cost,
+      actual_cost: nextActualCost,
     };
     cat.items[idx] = optimistic;
     categoryStatusInner(cat);
     this.recomputeBudgetSummary();
     try {
-      const updated = await api.purchaseItem(item.id, purchased, actualCost ?? undefined);
+      const updated = await api.purchaseItem(item.id, purchased, actualCost);
       cat.items[idx] = { ...optimistic, ...updated };
+      categoryStatusInner(cat);
+      this.recomputeBudgetSummary();
     } catch (e) {
       cat.items[idx] = prev;
       categoryStatusInner(cat);
@@ -329,8 +363,11 @@ class SimpleBudgetStore {
     for (const c of this.current.categories) {
       for (const it of c.items) {
         itemCount++;
-        if (it.purchased === 1 || (it.paymentSummary?.paidAmount ?? 0) > 0) {
-          spent += it.paymentSummary?.paidAmount ?? it.actual_cost ?? it.estimated_cost ?? 0;
+        const paidAmount = it.paymentSummary?.paidAmount ?? 0;
+        if (it.purchased === 1 || paidAmount > 0) {
+          spent += it.purchased === 1
+            ? it.actual_cost ?? it.estimated_cost ?? 0
+            : paidAmount;
           purchasedCount++;
         } else {
           committed += it.estimated_cost ?? 0;

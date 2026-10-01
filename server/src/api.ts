@@ -9,6 +9,7 @@ import {
   updateBudget,
   deleteBudget,
   getBudgetDetail,
+  recalculateBudget,
   getBudgetSummary,
   listCategories,
   getCategory,
@@ -69,6 +70,7 @@ const ERR_FALLBACK: Record<string, string> = {
   ERR_INVALID_PAYMENT_AMOUNT: "El importe del pago debe ser positivo",
   ERR_PAYMENT_NOTE_TOO_LONG: "La nota del pago es demasiado larga",
   ERR_PAYMENT_EXCEEDS_ACTUAL_COST: "El total de pagos no puede superar el coste real",
+  ERR_PURCHASE_REQUIRES_ACTUAL_COST: "El coste real es obligatorio para marcar como comprado",
   ERR_EMPTY_PATCH: "Debes enviar al menos un campo",
   ERR_NOT_FOUND: "Recurso no encontrado",
   ERR_INTERNAL: "Error interno del servidor",
@@ -147,6 +149,11 @@ api.post("/budgets", zValidator("json", budgetCreateSchema, validationHook), (c)
 api.get("/budgets/:id", zValidator("param", idParam), (c) => {
   const { id } = c.req.valid("param");
   return c.json(getBudgetDetail(id));
+});
+
+api.post("/budgets/:id/recalculate", zValidator("param", idParam), (c) => {
+  const { id } = c.req.valid("param");
+  return c.json(recalculateBudget(id));
 });
 
 api.patch("/budgets/:id", zValidator("param", idParam), zValidator("json", budgetUpdateSchema, validationHook), (c) => {
@@ -244,7 +251,8 @@ api.patch("/items/:id", zValidator("param", idParam), zValidator("json", itemUpd
 api.patch("/items/:id/purchase", zValidator("param", idParam), zValidator("json", purchaseSchema, validationHook), (c) => {
   const { id } = c.req.valid("param");
   const { purchased, actualCost, purchasedAt } = c.req.valid("json");
-  return c.json(setPurchased(id, purchased, actualCost, purchasedAt));
+  setPurchased(id, purchased, actualCost, purchasedAt);
+  return c.json(getItemDetail(id));
 });
 
 api.delete("/items/:id", zValidator("param", idParam), (c) => {
